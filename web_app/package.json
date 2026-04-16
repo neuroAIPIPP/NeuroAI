@@ -9,7 +9,7 @@
     "lint": "eslint",
     "format:write": "prettier --write \"**/*.{js,jsx,ts,tsx,mjs,json,yml,yaml,css,scss}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,mjs,json,yml,yaml,css,scss}\"",
-    "prepare": "husky"
+    "prepare": "cd .. && husky web_app/.husky"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,mjs}": [
