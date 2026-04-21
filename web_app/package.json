@@ -7,9 +7,9 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
+    "prepare": "cd .. && husky web_app/.husky",
     "format:write": "prettier --write \"**/*.{js,jsx,ts,tsx,mjs,json,yml,yaml,css,scss}\"",
-    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,mjs,json,yml,yaml,css,scss}\"",
-    "prepare": "cd .. && husky web_app/.husky"
+    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,mjs,json,yml,yaml,css,scss}\""
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,mjs}": [
@@ -24,6 +24,7 @@
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
     "dotenv": "^17.4.2",
+    "lucide-react": "^1.8.0",
     "next": "16.2.3",
     "pg": "^8.20.0",
     "react": "19.2.4",
@@ -36,13 +37,13 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^9",
+    "eslint": "^9.39.4",
     "eslint-config-next": "16.2.3",
     "eslint-config-prettier": "^10.1.8",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
-    "prettier": "3.8.3",
-    "prisma": "^7.7.0",
+    "prettier": "^3.8.3",
+    "prisma": "^6.19.3",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
