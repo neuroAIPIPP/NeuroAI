@@ -25,12 +25,12 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* User Profile Section */}
+        {/* Sign In Button */}
         <Link
-          href="/login"
-          className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-all cursor-pointer"
+          href="/register"
+          className="px-6 py-2 bg-white text-[#8EACCD] font-bold rounded-full hover:bg-gray-100 transition-all shadow-sm text-sm"
         >
-          <User className="w-5 h-5 text-white" />
+          Sign In
         </Link>
       </div>
     </nav>
