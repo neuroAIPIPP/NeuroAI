@@ -4,7 +4,7 @@ import GoogleButton from '@/components/auth/GoogleButton';
 import InputField from '@/components/auth/InputField';
 import PasswordField from '@/components/auth/PasswordField';
 import { useAuth } from '@/context/AuthContext';
-import { AtSign, LogIn } from 'lucide-react';
+import { AtSign, CheckCircle2, LogIn } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
@@ -16,6 +16,7 @@ interface FormErrors {
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const [isSuccess, setIsSuccess] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
@@ -76,10 +77,15 @@ export default function LoginPage() {
     );
     if (hasErrors) return;
 
-    // Design-only: Just log and redirect or show success
+    // Design-only: Just log and show success modal
     console.log('Login attempt with:', { email, password });
     login(); // Call the auth context login
-    router.push('/');
+    setIsSuccess(true);
+
+    // Redirect after 3 seconds
+    setTimeout(() => {
+      router.push('/');
+    }, 3000);
   };
 
   const handleGoogleLogin = () => {
@@ -138,6 +144,30 @@ export default function LoginPage() {
             Register
           </Link>
         </div>
+
+        {/* Success Modal */}
+        {isSuccess && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40 backdrop-blur-sm px-4">
+            <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center animate-[fadeIn_0.3s_ease-out]">
+              <div className="bg-green-100 text-green-500 p-4 rounded-full mb-4">
+                <CheckCircle2 size={48} />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                Login Berhasil!
+              </h3>
+              <p className="text-gray-500 text-center mb-6 text-sm">
+                Selamat datang kembali di NeuroLearn AI. Mengalihkan Anda ke
+                halaman utama...
+              </p>
+              <button
+                onClick={() => router.push('/')}
+                className="w-full bg-[#8eaccd] hover:bg-[#7b98b9] text-white font-medium py-3 rounded-xl transition-all shadow-md text-sm"
+              >
+                Lanjutkan Sekarang
+              </button>
+            </div>
+          </div>
+        )}
       </AuthCard>
     </div>
   );
