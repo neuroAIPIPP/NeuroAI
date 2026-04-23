@@ -6,6 +6,7 @@ import AuthHeader from '@/components/auth/AuthHeader';
 import GoogleButton from '@/components/auth/GoogleButton';
 import InputField from '@/components/auth/InputField';
 import PasswordField from '@/components/auth/PasswordField';
+import { authClient } from '@/lib/auth-client';
 import { AtSign, CheckCircle2, LogIn, Mail, User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -19,6 +20,8 @@ interface FormErrors {
 
 export default function RegisterPage() {
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [serverError, setServerError] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -68,6 +71,8 @@ export default function RegisterPage() {
         setPassword(value);
         break;
     }
+    setServerError('');
+
     // Clear error on type if already touched
     if (touched[field]) {
       const error = validateField(field, value);
@@ -75,7 +80,7 @@ export default function RegisterPage() {
     }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validate all fields
@@ -94,15 +99,42 @@ export default function RegisterPage() {
     );
     if (hasErrors) return;
 
+    setIsLoading(true);
+    setServerError('');
+
+    const { error } = await authClient.signUp.email({
+      name: username,
+      email,
+      password,
+      callbackURL: '/login',
+    });
+
+    setIsLoading(false);
+
+    if (error) {
+      if (error.code === 'USER_ALREADY_EXISTS') {
+        setServerError(
+          'Email sudah terdaftar. Silakan gunakan email lain atau login.',
+        );
+      } else {
+        setServerError(
+          error.message || 'Terjadi kesalahan. Silakan coba lagi.',
+        );
+      }
+      return;
+    }
+
     setIsSuccess(true);
     setTimeout(() => {
       router.push('/login');
     }, 5000);
   };
 
-  const handleGoogleRegister = () => {
-    // TODO: Integrate with Google OAuth provider
-    console.log('Register with Google clicked');
+  const handleGoogleRegister = async () => {
+    await authClient.signIn.social({
+      provider: 'google',
+      callbackURL: '/',
+    });
   };
 
   return (
@@ -145,13 +177,19 @@ export default function RegisterPage() {
             touched={touched.password}
           />
 
+          {/* Server Error */}
+          {serverError && (
+            <p className="text-red-500 text-xs text-center">{serverError}</p>
+          )}
+
           {/* Submit Button */}
           <div className="pt-2">
             <button
               type="submit"
-              className="w-full bg-[#8eaccd] hover:bg-[#7b98b9] text-white font-medium py-3 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-sm"
+              disabled={isLoading}
+              className="w-full bg-[#8eaccd] hover:bg-[#7b98b9] text-white font-medium py-3 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-sm disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Register <LogIn size={18} />
+              {isLoading ? 'Mendaftar...' : 'Register'} <LogIn size={18} />
             </button>
           </div>
         </form>

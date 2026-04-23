@@ -3,7 +3,7 @@
 import FeatureCard from '@/components/FeatureCard';
 import Hero from '@/components/Hero';
 import Navbar from '@/components/Navbar';
-import { useAuth } from '@/context/AuthContext';
+import { authClient } from '@/lib/auth-client';
 import { ArrowRight, Brain, Eye, UserCheck } from 'lucide-react';
 import Link from 'next/link';
 
@@ -29,7 +29,8 @@ const features = [
 ];
 
 export default function Home() {
-  const { isLoggedIn } = useAuth();
+  const { data: session } = authClient.useSession();
+  const isLoggedIn = !!session?.user;
 
   return (
     <main className="min-h-screen relative overflow-hidden">
