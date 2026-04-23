@@ -1,6 +1,9 @@
+'use client';
+
 import FeatureCard from '@/components/FeatureCard';
 import Hero from '@/components/Hero';
 import Navbar from '@/components/Navbar';
+import { useAuth } from '@/context/AuthContext';
 import { ArrowRight, Brain, Eye, UserCheck } from 'lucide-react';
 import Link from 'next/link';
 
@@ -26,6 +29,8 @@ const features = [
 ];
 
 export default function Home() {
+  const { isLoggedIn } = useAuth();
+
   return (
     <main className="min-h-screen relative overflow-hidden">
       {/* Background Decorative Elements */}
@@ -71,9 +76,9 @@ export default function Home() {
               achieve peak cognitive performance.
             </p>
             <div className="flex flex-wrap justify-center gap-4 pt-4">
-              <Link href="/register">
+              <Link href={isLoggedIn ? '/dashboard' : '/register'}>
                 <button className="px-10 py-5 bg-white text-[#8EACCD] rounded-2xl font-bold shadow-xl hover:bg-gray-100 transition-all flex items-center gap-2 group">
-                  Get Started for Free{' '}
+                  {isLoggedIn ? 'Go to Dashboard' : 'Get Started for Free'}{' '}
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </button>
               </Link>
