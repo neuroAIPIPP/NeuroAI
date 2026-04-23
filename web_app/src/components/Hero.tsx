@@ -1,7 +1,12 @@
+'use client';
+
+import { useAuth } from '@/context/AuthContext';
 import Image from 'next/image';
 import Link from 'next/link';
 
 export default function Hero() {
+  const { isLoggedIn } = useAuth();
+
   return (
     <section className="pt-32 pb-20 px-6">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -15,9 +20,9 @@ export default function Hero() {
             Monitor your focus in real time during learning sessions. Analyze
             attention levels using EEG, eye tracking, and facial recognition.
           </p>
-          <Link href="/login">
+          <Link href={isLoggedIn ? '/dashboard' : '/login'}>
             <button className="px-8 py-4 bg-[#8EACCD] text-white rounded-xl font-semibold shadow-lg hover:bg-[#7a9ab5] transform hover:-translate-y-1 transition-all active:scale-95">
-              Login to Dashboard
+              {isLoggedIn ? 'Go to Dashboard' : 'Login to Dashboard'}
             </button>
           </Link>
         </div>
