@@ -1,11 +1,12 @@
 'use client';
 
-import { useAuth } from '@/context/AuthContext';
+import { authClient } from '@/lib/auth-client';
 import Image from 'next/image';
 import Link from 'next/link';
 
 export default function Hero() {
-  const { isLoggedIn } = useAuth();
+  const { data: session } = authClient.useSession();
+  const isLoggedIn = !!session?.user;
 
   return (
     <section className="pt-32 pb-20 px-6">

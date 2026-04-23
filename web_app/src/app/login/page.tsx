@@ -1,9 +1,11 @@
+'use client';
+
 import AuthCard from '@/components/auth/AuthCard';
 import AuthHeader from '@/components/auth/AuthHeader';
 import GoogleButton from '@/components/auth/GoogleButton';
 import InputField from '@/components/auth/InputField';
 import PasswordField from '@/components/auth/PasswordField';
-import { useAuth } from '@/context/AuthContext';
+import { authClient } from '@/lib/auth-client';
 import { AtSign, CheckCircle2, LogIn } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -15,8 +17,9 @@ interface FormErrors {
 }
 
 export default function LoginPage() {
-  const { login } = useAuth();
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [serverError, setServerError] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
@@ -51,6 +54,7 @@ export default function LoginPage() {
   const handleChange = (field: string, value: string) => {
     if (field === 'email') setEmail(value);
     if (field === 'password') setPassword(value);
+    setServerError('');
 
     // Clear error on type if already touched
     if (touched[field]) {
@@ -59,7 +63,7 @@ export default function LoginPage() {
     }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validate all fields
@@ -77,9 +81,28 @@ export default function LoginPage() {
     );
     if (hasErrors) return;
 
-    // Design-only: Just log and show success modal
-    console.log('Login attempt with:', { email, password });
-    login(); // Call the auth context login
+    setIsLoading(true);
+    setServerError('');
+
+    const { error } = await authClient.signIn.email({
+      email,
+      password,
+      callbackURL: '/',
+    });
+
+    setIsLoading(false);
+
+    if (error) {
+      if (error.code === 'EMAIL_NOT_VERIFIED') {
+        setServerError(
+          'Email belum diverifikasi. Silakan cek inbox email Anda.',
+        );
+      } else {
+        setServerError('Email atau password salah. Silakan coba lagi.');
+      }
+      return;
+    }
+
     setIsSuccess(true);
 
     // Redirect after 3 seconds
@@ -88,8 +111,11 @@ export default function LoginPage() {
     }, 3000);
   };
 
-  const handleGoogleLogin = () => {
-    console.log('Google Login clicked');
+  const handleGoogleLogin = async () => {
+    await authClient.signIn.social({
+      provider: 'google',
+      callbackURL: '/',
+    });
   };
 
   return (
@@ -121,13 +147,19 @@ export default function LoginPage() {
             touched={touched.password}
           />
 
+          {/* Server Error */}
+          {serverError && (
+            <p className="text-red-500 text-xs text-center">{serverError}</p>
+          )}
+
           {/* Submit Button */}
           <div className="pt-2">
             <button
               type="submit"
-              className="w-full bg-[#8eaccd] hover:bg-[#7b98b9] text-white font-medium py-3 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-sm"
+              disabled={isLoading}
+              className="w-full bg-[#8eaccd] hover:bg-[#7b98b9] text-white font-medium py-3 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-sm disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Login <LogIn size={18} />
+              {isLoading ? 'Masuk...' : 'Login'} <LogIn size={18} />
             </button>
           </div>
         </form>
