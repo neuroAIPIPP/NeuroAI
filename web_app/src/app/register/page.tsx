@@ -16,6 +16,7 @@ interface FormErrors {
   username?: string;
   email?: string;
   password?: string;
+  confirmPassword?: string;
 }
 
 export default function RegisterPage() {
@@ -25,6 +26,7 @@ export default function RegisterPage() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const router = useRouter();
@@ -48,6 +50,11 @@ export default function RegisterPage() {
         if (!value.trim()) return 'Password wajib diisi';
         if (value.length < 6) return 'Password minimal 6 karakter';
         return undefined;
+      case 'confirmPassword':
+        if (!value.trim()) return 'Konfirmasi Password wajib diisi';
+        if (value.length < 6) return 'Konfirmasi Password minimal 6 karakter';
+        if (value !== password) return 'Konfirmasi Password tidak cocok';
+        return undefined;
       default:
         return undefined;
     }
@@ -70,6 +77,9 @@ export default function RegisterPage() {
       case 'password':
         setPassword(value);
         break;
+      case 'confirmPassword':
+        setConfirmPassword(value);
+        break;
     }
     setServerError('');
 
@@ -88,10 +98,16 @@ export default function RegisterPage() {
       username: validateField('username', username),
       email: validateField('email', email),
       password: validateField('password', password),
+      confirmPassword: validateField('confirmPassword', confirmPassword),
     };
 
     setErrors(newErrors);
-    setTouched({ username: true, email: true, password: true });
+    setTouched({
+      username: true,
+      email: true,
+      password: true,
+      confirmPassword: true,
+    });
 
     // Check if there are any errors
     const hasErrors = Object.values(newErrors).some(
@@ -175,6 +191,16 @@ export default function RegisterPage() {
             onBlur={() => handleBlur('password', password)}
             error={errors.password}
             touched={touched.password}
+          />
+
+          <PasswordField
+            label="CONFIRM PASSWORD"
+            placeholder="••••••••"
+            value={confirmPassword}
+            onChange={(e) => handleChange('confirmPassword', e.target.value)}
+            onBlur={() => handleBlur('confirmPassword', confirmPassword)}
+            error={errors.confirmPassword}
+            touched={touched.confirmPassword}
           />
 
           {/* Server Error */}
