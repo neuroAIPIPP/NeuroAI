@@ -1,11 +1,24 @@
+'use client';
+
 import Navbar from '@/components/Navbar';
 import EngagementChart from '@/components/dashboard/EngagementChart';
 import InfoCard from '@/components/dashboard/InfoCard';
 import StatCard from '@/components/dashboard/StatCard';
+import { useCameraDetection } from '@/hooks/hardware/useCameraDetection';
+import { useEEGHeadset } from '@/hooks/hardware/useEEGHeadset';
 import { BarChart2, Clock, Target } from 'lucide-react';
-import React from 'react';
 
 export default function DashboardPage() {
+  const { cameraStatus, lensVisibility } = useCameraDetection();
+  const { eegStatus } = useEEGHeadset();
+
+  // Helper to format camera display status
+  const getCameraDisplayStatus = () => {
+    if (cameraStatus.status !== 'Connected') return cameraStatus.status;
+    if (lensVisibility === 'Clear') return 'Active';
+    if (lensVisibility === 'Blocked / Covered') return 'Blocked';
+    return lensVisibility; // 'Verifying...' or 'Not Checked'
+  };
   return (
     <main className="min-h-screen relative overflow-hidden">
       {/* Background Decorative Elements */}
@@ -69,8 +82,8 @@ export default function DashboardPage() {
               <InfoCard
                 title="Device Status"
                 items={[
-                  { label: 'EEG', value: 'Connected' },
-                  { label: 'Camera', value: 'Active' },
+                  { label: 'EEG', value: eegStatus.status },
+                  { label: 'Camera', value: getCameraDisplayStatus() },
                 ]}
               />
               <InfoCard
