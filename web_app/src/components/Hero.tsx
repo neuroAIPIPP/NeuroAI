@@ -21,11 +21,18 @@ export default function Hero() {
             Monitor your focus in real time during learning sessions. Analyze
             attention levels using EEG, eye tracking, and facial recognition.
           </p>
-          <Link href={isLoggedIn ? '/dashboard' : '/login'}>
-            <button className="px-8 py-4 bg-[#8EACCD] text-white rounded-xl font-semibold shadow-lg hover:bg-[#7a9ab5] transform hover:-translate-y-1 transition-all active:scale-95">
-              {isLoggedIn ? 'Go to Dashboard' : 'Login to Dashboard'}
-            </button>
-          </Link>
+          <div className="flex flex-wrap gap-4">
+            <Link href={isLoggedIn ? '/dashboard' : '/login'}>
+              <button className="px-8 py-4 bg-[#8EACCD] text-white rounded-xl font-semibold shadow-lg hover:bg-[#7a9ab5] transform hover:-translate-y-1 transition-all active:scale-95">
+                {isLoggedIn ? 'Go to Dashboard' : 'Login to Dashboard'}
+              </button>
+            </Link>
+            <Link href={isLoggedIn ? '/session' : '/login'}>
+              <button className="px-8 py-4 bg-white text-[#8EACCD] rounded-xl font-semibold shadow-lg hover:bg-gray-50 transform hover:-translate-y-1 transition-all active:scale-95">
+                {isLoggedIn ? 'Go to Session' : 'Login for Session'}
+              </button>
+            </Link>
+          </div>
         </div>
 
         {/* Right Column: Brain Image */}

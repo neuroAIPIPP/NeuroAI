@@ -2,7 +2,8 @@ import Navbar from '@/components/Navbar';
 import EngagementChart from '@/components/dashboard/EngagementChart';
 import InfoCard from '@/components/dashboard/InfoCard';
 import StatCard from '@/components/dashboard/StatCard';
-import { BarChart2, Clock, Target } from 'lucide-react';
+import { ArrowRight, BarChart2, Clock, Target } from 'lucide-react';
+import Link from 'next/link';
 import React from 'react';
 
 export default function DashboardPage() {
@@ -15,9 +16,20 @@ export default function DashboardPage() {
       <Navbar />
 
       <div className="pt-28 pb-12 px-6 lg:px-12 max-w-[1400px] mx-auto min-h-screen flex flex-col relative z-10">
-        <h1 className="text-[2.75rem] font-bold text-[#2A3441] tracking-tight mb-8">
-          Personal Focus Dashboard
-        </h1>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+          <h1 className="text-[2.75rem] font-bold text-[#2A3441] tracking-tight">
+            Personal Focus Dashboard
+          </h1>
+          <Link href="/session">
+            <button className="px-6 py-3 rounded-full bg-[#3B526A] text-white text-sm font-bold hover:bg-[#2C3F53] transition-colors flex items-center justify-center gap-2 group shadow-lg">
+              Go to Session
+              <ArrowRight
+                className="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                strokeWidth={2.5}
+              />
+            </button>
+          </Link>
+        </div>
 
         <div className="flex-1 flex flex-col gap-6">
           {/* Top Stats Row */}
