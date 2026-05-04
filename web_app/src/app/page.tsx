@@ -79,7 +79,13 @@ export default function Home() {
             <div className="flex flex-wrap justify-center gap-4 pt-4">
               <Link href={isLoggedIn ? '/dashboard' : '/register'}>
                 <button className="px-10 py-5 bg-white text-[#8EACCD] rounded-2xl font-bold shadow-xl hover:bg-gray-100 transition-all flex items-center gap-2 group">
-                  {isLoggedIn ? 'Go to Dashboard' : 'Get Started for Free'}{' '}
+                  {isLoggedIn ? 'Go to Dashboard' : 'Get Started for Free'}
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </Link>
+              <Link href={isLoggedIn ? '/session' : '/login'}>
+                <button className="px-10 py-5 bg-transparent border-2 border-white text-white rounded-2xl font-bold shadow-xl hover:bg-white/10 transition-all flex items-center gap-2 group">
+                  {isLoggedIn ? 'Go to Session' : 'Login for Session'}
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </button>
               </Link>
