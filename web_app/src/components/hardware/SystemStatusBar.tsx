@@ -1,7 +1,25 @@
+'use client';
+
 import { ArrowRight, BadgeCheck } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import React from 'react';
 
 export default function SystemStatusBar() {
+  const router = useRouter();
+
+  const handleStartSession = () => {
+    const isCalibrated = localStorage.getItem('isCalibrated') === 'true';
+    if (isCalibrated) {
+      router.push('/session');
+    } else {
+      router.push('/session/calibration');
+    }
+  };
+
+  const handleRecalibrate = () => {
+    router.push('/session/calibration');
+  };
+
   return (
     <div className="bg-[#EEF2E6] rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
       <div className="flex items-center gap-4">
@@ -19,10 +37,16 @@ export default function SystemStatusBar() {
       </div>
 
       <div className="flex items-center gap-3 w-full md:w-auto">
-        <button className="flex-1 md:flex-none px-6 py-3 rounded-full bg-[#E2E8D5] text-[#4D5E3A] text-sm font-bold hover:bg-[#D5DCC6] transition-colors">
+        <button
+          onClick={handleRecalibrate}
+          className="flex-1 md:flex-none px-6 py-3 rounded-full bg-[#E2E8D5] text-[#4D5E3A] text-sm font-bold hover:bg-[#D5DCC6] transition-colors"
+        >
           Recalibrate
         </button>
-        <button className="flex-1 md:flex-none px-6 py-3 rounded-full bg-[#3B526A] text-white text-sm font-bold hover:bg-[#2C3F53] transition-colors flex items-center justify-center gap-2 group">
+        <button
+          onClick={handleStartSession}
+          className="flex-1 md:flex-none px-6 py-3 rounded-full bg-[#3B526A] text-white text-sm font-bold hover:bg-[#2C3F53] transition-colors flex items-center justify-center gap-2 group"
+        >
           Start Session
           <ArrowRight
             className="w-4 h-4 group-hover:translate-x-1 transition-transform"

@@ -1,7 +1,7 @@
 import Navbar from '@/components/Navbar';
 import DeviceCard from '@/components/hardware/DeviceCard';
 import SystemStatusBar from '@/components/hardware/SystemStatusBar';
-import { BarChart2, Check, Clock } from 'lucide-react';
+import { BarChart2, Check, Clock, Eye } from 'lucide-react';
 import React from 'react';
 
 export default function HardwarePage() {
@@ -37,7 +37,10 @@ export default function HardwarePage() {
             <DeviceCard
               deviceNumber="DEVICE 02"
               deviceName="Learning Camera"
-              metrics={[{ label: 'Status', value: 'Active', icon: Check }]}
+              metrics={[
+                { label: 'Status', value: 'Active', icon: Check },
+                { label: 'Lens Visibility', value: 'Clear', icon: Eye },
+              ]}
             />
           </div>
         </div>
