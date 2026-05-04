@@ -11,12 +11,14 @@ interface DeviceCardProps {
   deviceNumber: string;
   deviceName: string;
   metrics: Metric[];
+  children?: React.ReactNode;
 }
 
 export default function DeviceCard({
   deviceNumber,
   deviceName,
   metrics,
+  children,
 }: DeviceCardProps) {
   return (
     <div className="bg-white rounded-2xl p-8 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] flex flex-col relative overflow-hidden">
@@ -53,6 +55,12 @@ export default function DeviceCard({
           );
         })}
       </div>
+
+      {children && (
+        <div className="mt-6 pt-6 border-t border-slate-100 relative z-10">
+          {children}
+        </div>
+      )}
     </div>
   );
 }
