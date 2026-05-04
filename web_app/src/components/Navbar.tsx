@@ -37,9 +37,12 @@ export default function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 px-6 py-4 bg-[#8EACCD] rounded-b-[10px] shadow-md">
       <div className="max-w-7xl mx-auto flex items-center justify-between p-2 rounded-2xl">
         {/* Logo */}
-        <div className="text-2xl font-bold italic tracking-tight text-gradient-neuro">
+        <Link
+          href="/"
+          className="text-2xl font-bold italic tracking-tight text-gradient-neuro hover:opacity-80 transition-opacity cursor-pointer"
+        >
           NeuroLearn AI
-        </div>
+        </Link>
 
         {/* Navigation Links */}
         <div className="hidden md:flex items-center space-x-8">
