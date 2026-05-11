@@ -188,7 +188,7 @@ export default function SessionPage() {
       <div className="pt-28 pb-12 px-6 lg:px-12 max-w-[1400px] mx-auto min-h-screen flex flex-col relative z-10">
         <div className="flex justify-between items-end mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-[#2A3441] tracking-tight mb-2">
+            <h1 className="text-[2.75rem] font-bold text-[#2A3441] tracking-tight mb-2">
               Session
             </h1>
           </div>
@@ -206,9 +206,20 @@ export default function SessionPage() {
               {isActive ? 'Pause Session' : 'Resume Session'}
             </button>
             <button
-              disabled={true}
-              className="px-6 py-2.5 rounded-full bg-gray-300 text-gray-500 cursor-not-allowed text-sm font-bold flex items-center gap-2 transition-colors opacity-70"
-              title="Harus menyelesaikan semua 10 video untuk mengakhiri sesi"
+              disabled={
+                currentVideoIndex < videos.length - 1 || !surveyAnswered
+              }
+              onClick={() => setIsFinished(true)}
+              className={`px-6 py-2.5 rounded-full text-sm font-bold flex items-center gap-2 transition-all ${
+                currentVideoIndex < videos.length - 1 || !surveyAnswered
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-70'
+                  : 'bg-[#3B526A] text-white hover:bg-[#2C3F53] shadow-md'
+              }`}
+              title={
+                currentVideoIndex < videos.length - 1 || !surveyAnswered
+                  ? 'Harus menyelesaikan semua video dan survey untuk mengakhiri sesi'
+                  : 'Akhiri sesi dan simpan data'
+              }
             >
               <Square className="w-3.5 h-3.5 fill-current" />
               End Session
