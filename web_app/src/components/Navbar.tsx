@@ -48,8 +48,9 @@ export default function Navbar() {
         <div className="hidden md:flex items-center space-x-8">
           {['Dashboard', 'Session', 'Analytics', 'History', 'Hardware'].map(
             (item) => {
-              const href = `/${item.toLowerCase()}`;
-              const isActive = pathname === href;
+              const targetPath = `/${item.toLowerCase()}`;
+              const href = isLoggedIn ? targetPath : '/login';
+              const isActive = pathname === targetPath;
               return (
                 <Link
                   key={item}
