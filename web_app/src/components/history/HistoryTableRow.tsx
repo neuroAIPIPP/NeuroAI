@@ -1,39 +1,13 @@
 import { LucideIcon } from 'lucide-react';
 import React from 'react';
 
-export interface HistorySession {
-  id: string;
-  name: string;
-  lead: string;
-  duration: string;
-  focusScore: number;
-  date: string;
-  icon: LucideIcon;
-  iconColor: 'blue' | 'green' | 'red' | 'yellow';
-}
+import { HistorySession } from './types';
 
 interface HistoryTableRowProps {
   session: HistorySession;
 }
 
 export default function HistoryTableRow({ session }: HistoryTableRowProps) {
-  const Icon = session.icon;
-
-  const getIconStyles = (color: string) => {
-    switch (color) {
-      case 'blue':
-        return 'bg-blue-50 text-blue-500';
-      case 'green':
-        return 'bg-green-50 text-green-500';
-      case 'red':
-        return 'bg-red-50 text-red-500';
-      case 'yellow':
-        return 'bg-yellow-50 text-yellow-600';
-      default:
-        return 'bg-gray-50 text-gray-500';
-    }
-  };
-
   const getProgressColor = (score: number) => {
     if (score >= 80) return 'bg-[#3B526A]';
     if (score >= 60) return 'bg-[#556b2f]'; // Olive/Greenish for medium
@@ -42,13 +16,15 @@ export default function HistoryTableRow({ session }: HistoryTableRowProps) {
 
   return (
     <div className="flex items-center justify-between py-5 border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors px-6 md:px-8 bg-white">
+      {/* User */}
+      <div className="w-[15%]">
+        <span className="text-[14px] font-bold text-[#2A3441]">
+          {session.user}
+        </span>
+      </div>
+
       {/* Session Name & Lead */}
-      <div className="flex items-center gap-4 w-[30%]">
-        <div
-          className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${getIconStyles(session.iconColor)}`}
-        >
-          <Icon className="w-5 h-5" />
-        </div>
+      <div className="flex items-center gap-4 w-[25%]">
         <div>
           <h4 className="text-[15px] font-bold text-[#2A3441] leading-tight">
             {session.name}
@@ -87,7 +63,7 @@ export default function HistoryTableRow({ session }: HistoryTableRowProps) {
       </div>
 
       {/* Actions */}
-      <div className="w-[15%] flex justify-end">
+      <div className="w-[10%] flex justify-end">
         <button className="px-4 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-[#2A3441] text-[12px] font-bold rounded-lg transition-colors shadow-sm">
           View Details
         </button>
