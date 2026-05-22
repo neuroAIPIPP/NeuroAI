@@ -6,7 +6,7 @@ import GoogleButton from '@/components/auth/GoogleButton';
 import InputField from '@/components/auth/InputField';
 import PasswordField from '@/components/auth/PasswordField';
 import { authClient } from '@/lib/auth-client';
-import { AtSign, CheckCircle2, LogIn } from 'lucide-react';
+import { ArrowLeft, AtSign, CheckCircle2, LogIn } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
@@ -121,6 +121,13 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50/30">
       <AuthCard>
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-1.5 text-gray-400 hover:text-gray-700 font-medium transition-colors mb-2 text-sm"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </button>
         <AuthHeader title="Login" />
 
         {/* Form */}
@@ -151,6 +158,16 @@ export default function LoginPage() {
           {serverError && (
             <p className="text-red-500 text-xs text-center">{serverError}</p>
           )}
+
+          {/* Forgot Password Link */}
+          <div className="flex justify-end">
+            <Link
+              href="/forgot-password"
+              className="text-xs font-bold text-[#8eaccd] hover:text-[#7b98b9] hover:underline transition-colors"
+            >
+              Lupa Password?
+            </Link>
+          </div>
 
           {/* Submit Button */}
           <div className="pt-2">

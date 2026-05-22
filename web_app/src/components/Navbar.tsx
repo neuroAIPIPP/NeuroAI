@@ -48,8 +48,9 @@ export default function Navbar() {
         <div className="hidden md:flex items-center space-x-8">
           {['Dashboard', 'Session', 'Analytics', 'History', 'Hardware'].map(
             (item) => {
-              const href = `/${item.toLowerCase()}`;
-              const isActive = pathname === href;
+              const targetPath = `/${item.toLowerCase()}`;
+              const href = isLoggedIn ? targetPath : '/login';
+              const isActive = pathname === targetPath;
               return (
                 <Link
                   key={item}
@@ -91,7 +92,7 @@ export default function Navbar() {
           </div>
         ) : (
           <Link
-            href="/register"
+            href="/login"
             className="px-6 py-2 bg-white text-[#8EACCD] font-bold rounded-full hover:bg-gray-100 transition-all shadow-sm text-sm"
           >
             Sign In

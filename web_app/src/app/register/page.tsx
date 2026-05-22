@@ -7,7 +7,14 @@ import GoogleButton from '@/components/auth/GoogleButton';
 import InputField from '@/components/auth/InputField';
 import PasswordField from '@/components/auth/PasswordField';
 import { authClient } from '@/lib/auth-client';
-import { AtSign, CheckCircle2, LogIn, Mail, User } from 'lucide-react';
+import {
+  ArrowLeft,
+  AtSign,
+  CheckCircle2,
+  LogIn,
+  Mail,
+  User,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
@@ -156,6 +163,13 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <AuthCard>
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-1.5 text-gray-400 hover:text-gray-700 font-medium transition-colors mb-2 text-sm"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </button>
         <AuthHeader title="Register" />
 
         {/* Form */}
