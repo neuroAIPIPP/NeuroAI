@@ -1,5 +1,5 @@
 import { Calendar, ChevronDown, Search } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface HistorySearchFilterProps {
   searchQuery: string;

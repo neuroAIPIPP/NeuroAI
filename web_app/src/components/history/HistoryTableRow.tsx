@@ -1,6 +1,3 @@
-import { LucideIcon } from 'lucide-react';
-import React from 'react';
-
 import { HistorySession } from './types';
 
 interface HistoryTableRowProps {
