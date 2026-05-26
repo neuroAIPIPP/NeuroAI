@@ -1,6 +1,6 @@
-def main():
-    print("Hello from eeg!")
+"""
+EEG Module
+Lihat router.py untuk implementasi API endpoints.
+"""
 
-
-if __name__ == "__main__":
-    main()
+from eeg.router import router  # noqa: F401

@@ -46,26 +46,31 @@ export default function Navbar() {
 
         {/* Navigation Links */}
         <div className="hidden md:flex items-center space-x-8">
-          {['Dashboard', 'Session', 'Analytics', 'History', 'Hardware'].map(
-            (item) => {
-              const targetPath = `/${item.toLowerCase()}`;
-              const href = isLoggedIn ? targetPath : '/login';
-              const isActive = pathname === targetPath;
-              return (
-                <Link
-                  key={item}
-                  href={href}
-                  className={`text-lg transition-all ${
-                    isActive
-                      ? 'text-blue-500 border-b-4 border-blue-500 pb-1 font-bold'
-                      : 'text-white/80 hover:text-white font-medium'
-                  }`}
-                >
-                  {item}
-                </Link>
-              );
-            },
-          )}
+          {[
+            'Dashboard',
+            'Session',
+            'Analytics',
+            'History',
+            'Hardware',
+            'Face Register',
+          ].map((item) => {
+            const targetPath = `/${item.toLowerCase().replace(' ', '-')}`;
+            const href = isLoggedIn ? targetPath : '/login';
+            const isActive = pathname === targetPath;
+            return (
+              <Link
+                key={item}
+                href={href}
+                className={`text-lg transition-all ${
+                  isActive
+                    ? 'text-blue-500 border-b-4 border-blue-500 pb-1 font-bold'
+                    : 'text-white/80 hover:text-white font-medium'
+                }`}
+              >
+                {item}
+              </Link>
+            );
+          })}
         </div>
 
         {/* User Profile Section / Sign In Button */}

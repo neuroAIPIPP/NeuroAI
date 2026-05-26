@@ -26,6 +26,7 @@ model User {
   banExpires    DateTime?
   sessions      Session[]
   accounts      Account[]
+  studySessions StudySession[]
 
   @@unique([email])
   @@map("user")
@@ -78,4 +79,77 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+// ============================================================
+// AI / Study Session Models
+// ============================================================
+
+model StudySession {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startTime DateTime @default(now())
+  endTime   DateTime?
+  status    String   @default("active") // active, completed, cancelled
+
+  eegRecordings       EegRecording[]
+  eyeTrackingSessions EyeTrackingSession[]
+  faceVerifications   FaceVerification[]
+  videoRatings        VideoRating[]
+
+  @@index([userId])
+  @@map("study_session")
+}
+
+model EegRecording {
+  id        String       @id @default(uuid())
+  sessionId String
+  session   StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  filePath  String
+  startTime DateTime     @default(now())
+  endTime   DateTime?
+
+  @@index([sessionId])
+  @@map("eeg_recording")
+}
+
+model EyeTrackingSession {
+  id              String       @id @default(uuid())
+  sessionId       String
+  session         StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  videoTitle      String       @default("")
+  mode            String       @default("combined")
+  filePath        String?
+  totalDataPoints Int          @default(0)
+  startTime       DateTime     @default(now())
+  endTime         DateTime?
+
+  @@index([sessionId])
+  @@map("eye_tracking_session")
+}
+
+model FaceVerification {
+  id         String       @id @default(uuid())
+  sessionId  String
+  session    StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  timestamp  DateTime     @default(now())
+  personName String
+  confidence Float
+  isVerified Boolean
+
+  @@index([sessionId])
+  @@map("face_verification")
+}
+
+model VideoRating {
+  id        String       @id @default(uuid())
+  sessionId String
+  session   StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  videoTitle String
+  rating    Int
+  timestamp DateTime     @default(now())
+
+  @@index([sessionId])
+  @@map("video_rating")
 }

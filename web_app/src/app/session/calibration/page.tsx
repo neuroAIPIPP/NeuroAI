@@ -15,6 +15,10 @@ export default function CalibrationPage() {
   const [showWarning, setShowWarning] = useState(true);
 
   useEffect(() => {
+    localStorage.removeItem('isCalibrated');
+  }, []);
+
+  useEffect(() => {
     if (showWarning) return;
     // Simulate Hardware Check
     const checkHardware = setTimeout(() => {

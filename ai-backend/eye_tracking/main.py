@@ -1,6 +1,6 @@
-def main():
-    print("Hello from eye-tracking!")
+"""
+Eye Tracking Module
+Lihat router.py untuk implementasi API endpoints.
+"""
 
-
-if __name__ == "__main__":
-    main()
+from eye_tracking.router import router  # noqa: F401

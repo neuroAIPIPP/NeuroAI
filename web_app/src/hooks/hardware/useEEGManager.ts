@@ -1,6 +1,7 @@
 'use client';
 
-import { EegStatus, ExtendedNavigator } from '@/types/hardware';
+import { eegApi } from '@/lib/api/eegApi';
+import { EegStatus } from '@/types/hardware';
 import { useCallback, useState } from 'react';
 
 export function useEEGManager() {
@@ -13,57 +14,49 @@ export function useEEGManager() {
   const [isRefreshingEEG, setIsRefreshingEEG] = useState(false);
 
   const detectEEG = useCallback(async () => {
-    const nav = navigator as ExtendedNavigator;
     try {
-      if (!nav.usb) {
+      const { recording_mode } = await eegApi.getStatus();
+
+      if (recording_mode === null) {
         setEegStatus({
           status: 'Disconnected',
-          name: 'USB API not supported',
+          name: 'Backend Offline',
           signal: 'N/A',
           latency: 'N/A',
         });
-        return;
-      }
-
-      const devices = await nav.usb.getDevices();
-      if (devices.length > 0) {
+      } else if (recording_mode === 'Real' || recording_mode === 'Mock') {
         setEegStatus({
           status: 'Connected',
-          name: devices[0].productName || 'USB EEG Device',
-          signal: 'High',
-          latency: '14ms',
+          name:
+            recording_mode === 'Real'
+              ? 'Muse S (Bluetooth)'
+              : 'EEG (Simulated)',
+          signal: recording_mode === 'Real' ? 'High' : 'Perfect',
+          latency: recording_mode === 'Real' ? '14ms' : '0ms',
         });
       } else {
         setEegStatus({
-          status: 'Disconnected',
-          name: 'No USB device paired',
+          status: 'Searching...',
+          name: 'Looking for stream...',
           signal: 'N/A',
           latency: 'N/A',
         });
       }
     } catch (error) {
       console.error('EEG detection error:', error);
+      setEegStatus({
+        status: 'Disconnected',
+        name: 'Backend Error',
+        signal: 'N/A',
+        latency: 'N/A',
+      });
     }
   }, []);
-
   const handlePairEEG = useCallback(async () => {
-    const nav = navigator as ExtendedNavigator;
-    try {
-      if (!nav.usb) return;
-      const device = await nav.usb.requestDevice({ filters: [] });
-      if (device) {
-        setEegStatus({
-          status: 'Connected',
-          name: device.productName || 'USB EEG Device',
-          signal: 'High',
-          latency: '14ms',
-        });
-      }
-    } catch (error) {
-      console.error('Pairing cancelled or failed:', error);
-    }
-  }, []);
-
+    // In our new architecture, the backend handles Bluetooth/LSL pairing automatically.
+    // We just poll the status.
+    await detectEEG();
+  }, [detectEEG]);
   const handleEegAction = useCallback(async () => {
     if (eegStatus.status === 'Connected') {
       setIsRefreshingEEG(true);
