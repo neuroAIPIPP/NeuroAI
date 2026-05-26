@@ -214,3 +214,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ============================================================
+# NeuroAI - AI Data Files
+# ============================================================
+# EEG recordings (CSV)
+eeg/recordings/
+# Eye tracking data (CSV + metadata JSON)
+eye_tracking/data/
+# Face recognition models (pickle + metadata)
+face_recognition/saved_models/
