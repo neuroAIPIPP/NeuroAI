@@ -13,6 +13,7 @@ Jalankan:
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from analysis.router import router as analysis_router
 from eeg.router import router as eeg_router
 from eye_tracking.router import router as eye_tracking_router
 from face_module.router import router as face_recognition_router
@@ -40,6 +41,7 @@ app.add_middleware(
 app.include_router(eeg_router, prefix="/eeg", tags=["EEG"])
 app.include_router(eye_tracking_router, prefix="/eye-tracking", tags=["Eye Tracking"])
 app.include_router(face_recognition_router, prefix="/face", tags=["Face Recognition"])
+app.include_router(analysis_router, prefix="/analysis", tags=["Analysis"])
 
 
 @app.get("/")
@@ -51,6 +53,7 @@ async def root():
             "eeg": "/eeg",
             "eye_tracking": "/eye-tracking",
             "face_recognition": "/face",
+            "analysis": "/analysis",
         },
         "docs": "/docs",
     }

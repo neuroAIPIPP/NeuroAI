@@ -1,7 +1,7 @@
 'use client';
 
 import Navbar from '@/components/Navbar';
-import { useEyeTracking } from '@/hooks/useEyeTracking';
+import { TrackingData, useEyeTracking } from '@/hooks/useEyeTracking';
 import { eegApi } from '@/lib/api/eegApi';
 import { EyeTrackingDataPoint, eyeTrackingApi } from '@/lib/api/eyeTrackingApi';
 import { faceApi } from '@/lib/api/faceApi';
@@ -37,6 +37,7 @@ export default function SessionPage() {
   const [eegMode, setEegMode] = useState<string | null>(null);
   const [, setEegFile] = useState('');
   const [etSessionId, setEtSessionId] = useState('');
+  const etSessionIdRef = useRef('');
   const etBufferRef = useRef<EyeTrackingDataPoint[]>([]);
   const etBufferTimerRef = useRef<NodeJS.Timeout | null>(null);
   const webcamVideoRef = useRef<HTMLVideoElement>(null);
@@ -94,6 +95,10 @@ export default function SessionPage() {
   // Eye Tracking (client-side)
   const { isTracking, trackingData, error, startTracking, stopTracking } =
     useEyeTracking('combined');
+  const trackingDataRef = useRef<TrackingData | null>(null);
+  useEffect(() => {
+    trackingDataRef.current = trackingData;
+  }, [trackingData]);
 
   const videos = [
     {
@@ -187,12 +192,13 @@ export default function SessionPage() {
 
   // Flush eye tracking buffer to backend
   const flushEtBuffer = useCallback(async () => {
-    if (etBufferRef.current.length > 0 && etSessionId) {
+    const currentId = etSessionIdRef.current;
+    if (etBufferRef.current.length > 0 && currentId) {
       const batch = [...etBufferRef.current];
       etBufferRef.current = [];
-      await eyeTrackingApi.sendBatch(etSessionId, batch);
+      await eyeTrackingApi.sendBatch(currentId, batch);
     }
-  }, [etSessionId]);
+  }, []);
 
   // Verify face using webcam
   const verifyUserFace = useCallback(async () => {
@@ -245,6 +251,7 @@ export default function SessionPage() {
     );
     if (etResult.status === 'started') {
       setEtSessionId(etResult.session_id);
+      etSessionIdRef.current = etResult.session_id;
 
       // Tambahkan ke tracking list (state + ref)
       updateEtSessions((prev) => {
@@ -355,20 +362,21 @@ export default function SessionPage() {
     let interval: NodeJS.Timeout;
     if (isActive && !showSurvey && !isFinished && isTracking) {
       interval = setInterval(() => {
-        if (trackingData) {
+        const currentData = trackingDataRef.current;
+        if (currentData) {
           const videoTime = videoRef.current ? videoRef.current.currentTime : 0;
           const dataPoint: EyeTrackingDataPoint = {
             timestamp: Date.now(),
             video_time: videoTime,
-            left_pupil_x: trackingData.leftPupilX ?? null,
-            left_pupil_y: trackingData.leftPupilY ?? null,
-            right_pupil_x: trackingData.rightPupilX ?? null,
-            right_pupil_y: trackingData.rightPupilY ?? null,
-            is_focused: trackingData.isFocused,
-            gaze_direction: trackingData.gazeDirection,
-            screen_x: trackingData.screenX ?? null,
-            screen_y: trackingData.screenY ?? null,
-            screen_region: trackingData.screenRegion ?? null,
+            left_pupil_x: currentData.leftPupilX ?? null,
+            left_pupil_y: currentData.leftPupilY ?? null,
+            right_pupil_x: currentData.rightPupilX ?? null,
+            right_pupil_y: currentData.rightPupilY ?? null,
+            is_focused: currentData.isFocused,
+            gaze_direction: currentData.gazeDirection,
+            screen_x: currentData.screenX ?? null,
+            screen_y: currentData.screenY ?? null,
+            screen_region: currentData.screenRegion ?? null,
           };
           etBufferRef.current.push(dataPoint);
           console.log('[Eye Tracking] Data buffered:', dataPoint);
@@ -378,7 +386,7 @@ export default function SessionPage() {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isActive, showSurvey, isFinished, isTracking, trackingData]);
+  }, [isActive, showSurvey, isFinished, isTracking]);
 
   useEffect(() => {
     const isCalibrated = localStorage.getItem('isCalibrated') === 'true';
@@ -483,6 +491,29 @@ export default function SessionPage() {
       }
 
       console.log('[Session Save] Success:', resData);
+
+      // Trigger AI concentration analysis in background (non-blocking)
+      if (resData.sessionId) {
+        fetch('/api/session/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: resData.sessionId }),
+        })
+          .then((res) => res.json())
+          .then((analysisResult) => {
+            console.log(
+              '[Session Save] AI Analysis completed:',
+              analysisResult,
+            );
+          })
+          .catch((err) => {
+            console.warn(
+              '[Session Save] AI Analysis failed (non-critical):',
+              err,
+            );
+          });
+      }
+
       setIsFinished(true);
     } catch (e: unknown) {
       console.error('[Session Save] Error saving session to database:', e);

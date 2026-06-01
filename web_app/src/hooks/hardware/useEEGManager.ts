@@ -7,7 +7,7 @@ import { useCallback, useState } from 'react';
 export function useEEGManager() {
   const [eegStatus, setEegStatus] = useState<EegStatus>({
     status: 'Searching...',
-    name: 'Scanning USB ports...',
+    name: 'Mencari Stream LSL...',
     signal: 'N/A',
     latency: 'N/A',
   });
@@ -29,15 +29,15 @@ export function useEEGManager() {
           status: 'Connected',
           name:
             recording_mode === 'Real'
-              ? 'Muse S (Bluetooth)'
+              ? 'Muse S (LSL Stream)'
               : 'EEG (Simulated)',
           signal: recording_mode === 'Real' ? 'High' : 'Perfect',
-          latency: recording_mode === 'Real' ? '14ms' : '0ms',
+          latency: recording_mode === 'Real' ? '< 20ms' : '0ms',
         });
       } else {
         setEegStatus({
           status: 'Searching...',
-          name: 'Looking for stream...',
+          name: 'Looking for LSL stream...',
           signal: 'N/A',
           latency: 'N/A',
         });
@@ -53,20 +53,20 @@ export function useEEGManager() {
     }
   }, []);
   const handlePairEEG = useCallback(async () => {
-    // In our new architecture, the backend handles Bluetooth/LSL pairing automatically.
-    // We just poll the status.
+    // Karena kita memakai muselsl, pairing dilakukan di terminal (backend).
+    // Tombol di frontend hanya me-refresh deteksi status.
+    setIsRefreshingEEG(true);
     await detectEEG();
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    setIsRefreshingEEG(false);
   }, [detectEEG]);
+
   const handleEegAction = useCallback(async () => {
-    if (eegStatus.status === 'Connected') {
-      setIsRefreshingEEG(true);
-      await detectEEG();
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      setIsRefreshingEEG(false);
-    } else {
-      await handlePairEEG();
-    }
-  }, [eegStatus.status, detectEEG, handlePairEEG]);
+    setIsRefreshingEEG(true);
+    await detectEEG();
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    setIsRefreshingEEG(false);
+  }, [detectEEG]);
 
   return {
     eegStatus,
