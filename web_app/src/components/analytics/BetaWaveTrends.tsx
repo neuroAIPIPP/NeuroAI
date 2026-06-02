@@ -103,7 +103,8 @@ export default function BetaWaveTrends({
                 boxShadow: '0 8px 30px rgb(0,0,0,0.08)',
                 fontSize: '12px',
               }}
-              formatter={(value: number) => [`${value}%`, 'Focus']}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              formatter={(value: any) => [`${value}%`, 'Focus']}
             />
             <Area
               type="monotone"
