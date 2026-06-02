@@ -44,13 +44,13 @@ export default function SessionWebcamSection({
         <div className="flex gap-4">
           <span className="text-[10px] font-mono text-[#8EACCD]">
             X:{' '}
-            {trackingData?.screenX && typeof window !== 'undefined'
+            {trackingData?.screenX != null && typeof window !== 'undefined'
               ? (trackingData.screenX / window.innerWidth).toFixed(3)
               : '0.000'}
           </span>
           <span className="text-[10px] font-mono text-[#8EACCD]">
             Y:{' '}
-            {trackingData?.screenY && typeof window !== 'undefined'
+            {trackingData?.screenY != null && typeof window !== 'undefined'
               ? (trackingData.screenY / window.innerHeight).toFixed(3)
               : '0.000'}
           </span>

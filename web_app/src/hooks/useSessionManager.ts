@@ -5,8 +5,8 @@ import { eegApi } from '@/lib/api/eegApi';
 import { EyeTrackingDataPoint, eyeTrackingApi } from '@/lib/api/eyeTrackingApi';
 import { faceApi } from '@/lib/api/faceApi';
 import { authClient } from '@/lib/auth-client';
-import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 // ============================================================
 // Types
@@ -40,60 +40,60 @@ export const SESSION_VIDEOS: VideoItem[] = [
     subtitle: 'Biologi Redominasi',
     src: '/Videos/Video Biologi Redominasi FIX.mp4',
   },
-  // {
-  //   id: 2,
-  //   title: 'Video 2',
-  //   subtitle: 'FAPERTA Dasar Genetika',
-  //   src: '/Videos/Video FAPERTA Dasar Genetika FIX.mp4',
-  // },
-  // {
-  //   id: 3,
-  //   title: 'Video 3',
-  //   subtitle: 'FIKOM Analisis',
-  //   src: '/Videos/Video FIKOM Analisis FIX.mp4',
-  // },
-  // {
-  //   id: 4,
-  //   title: 'Video 4',
-  //   subtitle: 'FIKOM Gravity',
-  //   src: '/Videos/Video FIKOM Gravity FIX.mp4',
-  // },
-  // {
-  //   id: 5,
-  //   title: 'Video 5',
-  //   subtitle: 'FIKOM Model Komunikasi',
-  //   src: '/Videos/Video FIKOM Model Komunikasi FIX.mp4',
-  // },
-  // {
-  //   id: 6,
-  //   title: 'Video 6',
-  //   subtitle: 'Indonesia Core',
-  //   src: '/Videos/Video Indonesia Core FIX.mp4',
-  // },
-  // {
-  //   id: 7,
-  //   title: 'Video 7',
-  //   subtitle: 'Kucing',
-  //   src: '/Videos/Video Kucing FIX.mp4',
-  // },
-  // {
-  //   id: 8,
-  //   title: 'Video 8',
-  //   subtitle: 'Kucing Gemoy',
-  //   src: '/Videos/Video Kucing Gemoy FIX.mp4',
-  // },
-  // {
-  //   id: 9,
-  //   title: 'Video 9',
-  //   subtitle: 'MUKBANG',
-  //   src: '/Videos/Video MUKBANG FIX.mp4',
-  // },
-  // {
-  //   id: 10,
-  //   title: 'Video 10',
-  //   subtitle: 'Meme 1',
-  //   src: '/Videos/Video Meme 1 FIX.mp4',
-  // },
+  {
+    id: 2,
+    title: 'Video 2',
+    subtitle: 'FAPERTA Dasar Genetika',
+    src: '/Videos/Video FAPERTA Dasar Genetika FIX.mp4',
+  },
+  {
+    id: 3,
+    title: 'Video 3',
+    subtitle: 'FIKOM Analisis',
+    src: '/Videos/Video FIKOM Analisis FIX.mp4',
+  },
+  {
+    id: 4,
+    title: 'Video 4',
+    subtitle: 'FIKOM Gravity',
+    src: '/Videos/Video FIKOM Gravity FIX.mp4',
+  },
+  {
+    id: 5,
+    title: 'Video 5',
+    subtitle: 'FIKOM Model Komunikasi',
+    src: '/Videos/Video FIKOM Model Komunikasi FIX.mp4',
+  },
+  {
+    id: 6,
+    title: 'Video 6',
+    subtitle: 'Indonesia Core',
+    src: '/Videos/Video Indonesia Core FIX.mp4',
+  },
+  {
+    id: 7,
+    title: 'Video 7',
+    subtitle: 'Kucing',
+    src: '/Videos/Video Kucing FIX.mp4',
+  },
+  {
+    id: 8,
+    title: 'Video 8',
+    subtitle: 'Kucing Gemoy',
+    src: '/Videos/Video Kucing Gemoy FIX.mp4',
+  },
+  {
+    id: 9,
+    title: 'Video 9',
+    subtitle: 'MUKBANG',
+    src: '/Videos/Video MUKBANG FIX.mp4',
+  },
+  {
+    id: 10,
+    title: 'Video 10',
+    subtitle: 'Meme 1',
+    src: '/Videos/Video Meme 1 FIX.mp4',
+  },
 ];
 
 // ============================================================
@@ -122,7 +122,7 @@ export function useSessionManager() {
   const webcamVideoRef = useRef<HTMLVideoElement>(null);
 
   // Session Save States
-  authClient.useSession();
+  const { data: authSession } = authClient.useSession();
   const [videoRatings, setVideoRatings] = useState<
     { videoTitle: string; rating: number; timestamp?: string }[]
   >([]);
@@ -165,7 +165,14 @@ export function useSessionManager() {
   const { isTracking, trackingData, error, startTracking, stopTracking } =
     useEyeTracking('combined');
 
-  const videos = SESSION_VIDEOS;
+  const searchParams = useSearchParams();
+  const videos = useMemo(() => {
+    const meetingId = searchParams.get('meetingId');
+    if (!meetingId) return [SESSION_VIDEOS[0]];
+    const meetingNum = parseInt(meetingId.replace(/\D/g, ''), 10);
+    const videoObj = SESSION_VIDEOS.find((v) => v.id === meetingNum);
+    return videoObj ? [videoObj] : [SESSION_VIDEOS[0]];
+  }, [searchParams]);
   const currentVideo = videos[currentVideoIndex];
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -173,20 +180,40 @@ export function useSessionManager() {
   // Play/Pause effect
   // ============================================================
   useEffect(() => {
-    if (videoRef.current) {
-      if (isActive && !showSurvey && !isFinished) {
+    if (!videoRef.current) {
+      return;
+    }
+
+    if (isActive && !showSurvey && !isFinished) {
+      const startPlayback = () => {
+        if (!videoRef.current) return;
+
+        // Workaround: If the browser pipeline is stuck, forcing a quick pause/reset can unstick it
+        if (
+          !videoRef.current.paused &&
+          videoRef.current.currentTime === 0 &&
+          videoRef.current.readyState === 4
+        ) {
+          videoRef.current.pause();
+          videoRef.current.currentTime = 0.001;
+        }
+
         const playPromise = videoRef.current.play();
         if (playPromise !== undefined) {
-          playPromise.catch((e) => {
+          playPromise.catch((e: Error) => {
             console.error('Play error:', e);
             if (e.name === 'NotAllowedError') {
               setIsActive(false);
             }
           });
         }
-      } else {
-        videoRef.current.pause();
-      }
+      };
+
+      // Slight delay allows the React commit phase to settle before interacting with the media pipeline
+      const timer = setTimeout(startPlayback, 100);
+      return () => clearTimeout(timer);
+    } else {
+      videoRef.current.pause();
     }
   }, [isActive, showSurvey, isFinished, currentVideoIndex]);
 
@@ -232,7 +259,12 @@ export function useSessionManager() {
     }
   }, []);
 
+  const aiRunningRef = useRef(false);
+
   const startAIModules = async () => {
+    if (aiRunningRef.current) return; // Guard: prevent multiple starts
+    aiRunningRef.current = true;
+
     const eegResult = await eegApi.startSession();
     if (
       eegResult.status === 'started' ||
@@ -244,8 +276,11 @@ export function useSessionManager() {
     }
 
     const currentVid = videos[currentVideoIndex];
+    const userId = authSession?.user?.id;
     const etResult = await eyeTrackingApi.startSession(
       currentVid.subtitle || currentVid.title,
+      'combined',
+      userId,
     );
     if (etResult.status === 'started') {
       setEtSessionId(etResult.session_id);
@@ -275,6 +310,15 @@ export function useSessionManager() {
   };
 
   const stopAIModules = async () => {
+    if (!aiRunningRef.current) {
+      return {
+        eegFile: eegFileRef.current,
+        eyeTrackingSessions: etSessionsRef.current,
+        faceVerifications: faceVerificationsRef.current,
+      };
+    }
+    aiRunningRef.current = false;
+
     await flushEtBuffer();
 
     if (etBufferTimerRef.current) {
@@ -294,9 +338,25 @@ export function useSessionManager() {
       }
     }
 
+    let finalEtSessions = etSessionsRef.current;
     if (etSessionId) {
       const stoppingSessionId = etSessionId;
       const etResult = await eyeTrackingApi.stopSession(stoppingSessionId);
+
+      finalEtSessions = etSessionsRef.current.map((s) => {
+        if (s.sessionId === stoppingSessionId) {
+          return {
+            ...s,
+            filePath: etResult.file_path,
+            totalDataPoints: etResult.total_data_points,
+            endTime: new Date().toISOString(),
+          };
+        }
+        return s;
+      });
+
+      etSessionsRef.current = finalEtSessions;
+
       updateEtSessions((prev) =>
         prev.map((s) => {
           if (s.sessionId === stoppingSessionId) {
@@ -317,7 +377,7 @@ export function useSessionManager() {
 
     return {
       eegFile: finalEegFile,
-      eyeTrackingSessions: etSessionsRef.current,
+      eyeTrackingSessions: finalEtSessions,
       faceVerifications: faceVerificationsRef.current,
     };
   };
@@ -327,12 +387,15 @@ export function useSessionManager() {
     if (isActive && !showSurvey && !isFinished) {
       startAIModules();
     } else {
-      stopAIModules();
+      // Properly await stop to prevent race conditions
+      stopAIModules().catch((err) =>
+        console.error('[Session] Error stopping AI modules:', err),
+      );
     }
     return () => {
-      if (etBufferTimerRef.current) {
-        clearInterval(etBufferTimerRef.current);
-      }
+      stopAIModules().catch((err) =>
+        console.error('[Session] Cleanup error:', err),
+      );
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive, showSurvey, isFinished]);
@@ -358,7 +421,6 @@ export function useSessionManager() {
             screen_region: trackingData.screenRegion ?? null,
           };
           etBufferRef.current.push(dataPoint);
-          console.log('[Eye Tracking] Data buffered:', dataPoint);
         }
       }, 1000);
     }
@@ -405,7 +467,6 @@ export function useSessionManager() {
   };
 
   const handleSurveySubmit = async (answer: string) => {
-    console.log(`User answered: ${answer}`);
     await eegApi.setMarker(`Survey_Answer_${answer}`);
     setSurveyAnswered(true);
 
@@ -427,9 +488,6 @@ export function useSessionManager() {
       const stopResult = await stopAIModules();
       const finalEegFile = stopResult.eegFile || eegFileRef.current;
       const finalEtSessions = stopResult.eyeTrackingSessions;
-
-      console.log('[Session Save] ET sessions from ref:', finalEtSessions);
-      console.log('[Session Save] EEG file:', finalEegFile);
 
       const payload = {
         startTime: sessionStartTime,
@@ -454,8 +512,6 @@ export function useSessionManager() {
         faceVerifications: stopResult.faceVerifications || [],
       };
 
-      console.log('[Session Save] Sending payload:', payload);
-
       const response = await fetch('/api/session/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -467,10 +523,32 @@ export function useSessionManager() {
         throw new Error(resData.error || 'Gagal menyimpan sesi');
       }
 
-      console.log('[Session Save] Success:', resData);
+      // Trigger concentration analysis calculation
+      if (resData.sessionId) {
+        try {
+          const analyzeResponse = await fetch('/api/session/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId: resData.sessionId }),
+          });
+          if (!analyzeResponse.ok) {
+            console.error(
+              '[Session Manager] Analysis failed:',
+              await analyzeResponse.text(),
+            );
+          } else {
+            console.log(
+              '[Session Manager] Analysis completed successfully for session:',
+              resData.sessionId,
+            );
+          }
+        } catch (err) {
+          console.error('[Session Manager] Error triggering analysis:', err);
+        }
+      }
+
       setIsFinished(true);
     } catch (e: unknown) {
-      console.error('[Session Save] Error saving session to database:', e);
       alert(
         `Gagal menyimpan data ke database: ${e instanceof Error ? e.message : String(e)}`,
       );
@@ -508,7 +586,9 @@ export function useSessionManager() {
   return {
     // Session state
     isActive,
-    setIsActive,
+    toggleActive: () => {
+      setIsActive(!isActive);
+    },
     isFinished,
     isSaving,
     elapsedTime,

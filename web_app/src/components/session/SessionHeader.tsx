@@ -7,7 +7,6 @@ interface SessionHeaderProps {
   isActive: boolean;
   onToggleActive: () => void;
   elapsedTime: number;
-  formatTime: (seconds: number) => string;
   onRecalibrate: () => void;
   onSaveSession: () => void;
   isSaving: boolean;
@@ -18,7 +17,6 @@ export default function SessionHeader({
   isActive,
   onToggleActive,
   elapsedTime,
-  formatTime,
   onRecalibrate,
   onSaveSession,
   isSaving,
@@ -66,7 +64,7 @@ export default function SessionHeader({
           }`}
           title={
             !canEndSession
-              ? 'Harus menyelesaikan semua video dan survey untuk mengakhiri sesi'
+              ? 'Mulai sesi terlebih dahulu untuk dapat mengakhirinya'
               : 'Akhiri sesi dan simpan data'
           }
         >

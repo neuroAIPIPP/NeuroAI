@@ -265,7 +265,11 @@ export function useEyeTracking(
     setIsTracking(false);
     setTrackingData(null);
 
-    if (cameraVideoRef.current?.srcObject) {
+    // If WebGazer is active, let webgazer.end() handle stream cleanup.
+    // Only manually stop tracks when WebGazer is NOT managing the stream.
+    const webgazerActive = !!webgazerRef.current;
+
+    if (!webgazerActive && cameraVideoRef.current?.srcObject) {
       const stream = cameraVideoRef.current.srcObject as MediaStream;
       stream.getTracks().forEach((track) => track.stop());
     }
@@ -287,6 +291,8 @@ export function useEyeTracking(
     } catch {
       // Already ended
     }
+
+    cameraVideoRef.current = null;
   };
 
   useEffect(() => {

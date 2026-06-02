@@ -62,3 +62,9 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+
+@app.on_event("shutdown")
+def on_shutdown():
+    from eye_tracking.router import cleanup_active_sessions
+    cleanup_active_sessions()

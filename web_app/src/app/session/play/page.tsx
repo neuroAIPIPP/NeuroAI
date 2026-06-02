@@ -9,9 +9,9 @@ import SessionStatusCard from '@/components/session/SessionStatusCard';
 import SessionVideoSection from '@/components/session/SessionVideoSection';
 import SessionWebcamSection from '@/components/session/SessionWebcamSection';
 import { useSessionManager } from '@/hooks/useSessionManager';
-import React from 'react';
+import React, { Suspense } from 'react';
 
-export default function SessionPage() {
+function SessionPageContent() {
   const session = useSessionManager();
 
   if (session.isFinished) {
@@ -34,16 +34,17 @@ export default function SessionPage() {
       <div className="pt-28 pb-12 px-6 lg:px-12 max-w-[1400px] mx-auto min-h-screen flex flex-col relative z-10">
         <SessionHeader
           isActive={session.isActive}
-          onToggleActive={() => session.setIsActive(!session.isActive)}
+          onToggleActive={session.toggleActive}
           elapsedTime={session.elapsedTime}
-          formatTime={session.formatTime}
           onRecalibrate={session.handleRecalibrate}
-          onSaveSession={() => session.saveSessionData(true)}
+          onSaveSession={() => {
+            const isCompleted =
+              session.currentVideoIndex >= session.videos.length - 1 &&
+              session.surveyAnswered;
+            session.saveSessionData(isCompleted);
+          }}
           isSaving={session.isSaving}
-          canEndSession={
-            session.currentVideoIndex >= session.videos.length - 1 &&
-            session.surveyAnswered
-          }
+          canEndSession={session.elapsedTime > 0 || session.isActive}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -59,9 +60,11 @@ export default function SessionPage() {
               onVideoEnded={session.handleVideoEnded}
               onTimeUpdate={(e) => {
                 const video = e.target as HTMLVideoElement;
-                session.setVideoProgress(
-                  (video.currentTime / video.duration) * 100,
-                );
+                const progress =
+                  video.duration > 0
+                    ? (video.currentTime / video.duration) * 100
+                    : 0;
+                session.setVideoProgress(progress);
               }}
               onSurveySubmit={session.handleSurveySubmit}
               onNextVideo={session.handleNextVideo}
@@ -104,5 +107,19 @@ export default function SessionPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function SessionPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <p className="text-gray-500 font-medium">Loading session...</p>
+        </div>
+      }
+    >
+      <SessionPageContent />
+    </Suspense>
   );
 }

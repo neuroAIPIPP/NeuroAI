@@ -62,6 +62,7 @@ export function HardwareProvider({ children }: { children: ReactNode }) {
         nav.usb.ondisconnect = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [camera.detectCamera, eeg.detectEEG]);
 
   return (

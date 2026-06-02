@@ -5,11 +5,15 @@ import CalibrationStatusBadge from '@/components/session/CalibrationStatusBadge'
 import { CalibrationStatus } from '@/components/session/CalibrationStatusBadge';
 import CalibrationVisual from '@/components/session/CalibrationVisual';
 import CalibrationWarningModal from '@/components/session/CalibrationWarningModal';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
 
-export default function CalibrationPage() {
+function CalibrationPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const courseId = searchParams.get('courseId');
+  const meetingId = searchParams.get('meetingId');
+
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState<CalibrationStatus>('checking');
   const [errorMsg, setErrorMsg] = useState('');
@@ -48,7 +52,11 @@ export default function CalibrationPage() {
           clearInterval(timer);
           localStorage.setItem('isCalibrated', 'true');
           setTimeout(() => {
-            router.push('/session/play');
+            let url = '/session/play';
+            if (courseId && meetingId) {
+              url += `?courseId=${courseId}&meetingId=${meetingId}`;
+            }
+            router.push(url);
           }, 1000);
           return 100;
         }
@@ -57,7 +65,7 @@ export default function CalibrationPage() {
     }, 100);
 
     return () => clearInterval(timer);
-  }, [router, status]);
+  }, [router, status, courseId, meetingId]);
 
   return (
     <main className="min-h-screen relative overflow-hidden bg-transparent">
@@ -107,5 +115,19 @@ export default function CalibrationPage() {
         }
       `}</style>
     </main>
+  );
+}
+
+export default function CalibrationPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <p className="text-gray-500 font-medium">Loading calibration...</p>
+        </div>
+      }
+    >
+      <CalibrationPageContent />
+    </Suspense>
   );
 }
