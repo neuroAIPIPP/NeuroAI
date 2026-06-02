@@ -1,7 +1,6 @@
 import Navbar from '@/components/Navbar';
 import HistoryTable from '@/components/history/HistoryTable';
 import { Layers, TrendingUp } from 'lucide-react';
-import React from 'react';
 
 export default function HistoryPage() {
   return (

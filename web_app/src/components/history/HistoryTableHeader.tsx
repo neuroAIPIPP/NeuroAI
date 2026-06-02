@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function HistoryTableHeader() {
   return (
     <div className="flex items-center justify-between py-4 px-6 md:px-8 bg-slate-100/80 border-b border-slate-200/60">
