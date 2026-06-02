@@ -97,6 +97,7 @@ model StudySession {
   eyeTrackingSessions EyeTrackingSession[]
   faceVerifications   FaceVerification[]
   videoRatings        VideoRating[]
+  analyses            ConcentrationAnalysis[]
 
   @@index([userId])
   @@map("study_session")
@@ -152,4 +153,43 @@ model VideoRating {
 
   @@index([sessionId])
   @@map("video_rating")
+}
+
+model ConcentrationAnalysis {
+  id                    String       @id @default(uuid())
+  sessionId             String
+  session               StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  // Core Metrics
+  concentrationScore    Float        // 0-100%
+  eyeTrackingScore      Float        // 0-100%
+  eegScore              Float        // 0-100%
+
+  // Eye Tracking Breakdown
+  focusPercentage       Float        // % waktu focused
+  gazeDistribution      Json         // {center: x, left: y, ...}
+  pupilStability        Float        // 0-100
+
+  // EEG Breakdown
+  attentionIndex        Float?       // beta/alpha ratio
+  relaxationIndex       Float?       // theta/alpha ratio
+  bandPowers            Json?        // {delta, theta, alpha, beta, gamma}
+
+  // AI Insights (dari Gemini)
+  aiSummary             String?      @db.Text
+  aiStrengths           Json?        // string[]
+  aiImprovements        Json?        // string[]
+  aiPatterns            Json?        // string[]
+  aiTips                Json?        // string[]
+  aiGenerated           Boolean      @default(false)
+
+  // Metadata
+  videoTitle            String?
+  analysisMode          String       @default("post-session")
+  eegMode               String?      // Real, Mock, null
+  confidenceLevel       String       @default("low") // high, medium, low
+  createdAt             DateTime     @default(now())
+
+  @@index([sessionId])
+  @@map("concentration_analysis")
 }
