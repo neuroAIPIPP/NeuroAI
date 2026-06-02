@@ -349,13 +349,17 @@ async def get_status():
     """Status module face recognition."""
     try:
         import face_recognition  # noqa: F401
-
         fr_available = True
-    except ImportError:
+        error_msg = None
+    except Exception as e:
         fr_available = False
+        error_msg = str(e)
+        import traceback
+        traceback.print_exc()
 
     return {
         "face_recognition_available": fr_available,
+        "error": error_msg,
         "total_registered_faces": len(engine.known_face_names),
         "registered_names": engine.known_face_names,
     }
