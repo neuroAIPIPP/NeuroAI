@@ -16,6 +16,7 @@ Endpoints:
 import csv
 import os
 import json
+import uuid
 from datetime import datetime
 from typing import Optional
 
@@ -98,7 +99,7 @@ class SessionStopResponse(BaseModel):
 # ============================================================
 def generate_session_id() -> str:
     """Generate unique session ID."""
-    return datetime.now().strftime("ET_%Y%m%d_%H%M%S")
+    return f"ET_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
 
 
 def get_csv_writer(session_id: str):
@@ -109,12 +110,41 @@ def get_csv_writer(session_id: str):
     return None, None
 
 
+def prune_idle_sessions():
+    """Prune sessions that have been inactive for more than 10 minutes."""
+    now = datetime.now()
+    idle_timeout = 600  # seconds (10 minutes)
+    for session_id, session in list(active_sessions.items()):
+        last_active = session.get("last_active", now)
+        if (now - last_active).total_seconds() > idle_timeout:
+            try:
+                if "file" in session and not session["file"].closed:
+                    session["file"].close()
+                print(f"⏰ [Eye Tracking] Closed idle session {session_id} due to inactivity")
+            except Exception as e:
+                print(f"⚠️ [Eye Tracking] Error closing idle session {session_id}: {e}")
+            del active_sessions[session_id]
+
+
+def cleanup_active_sessions():
+    """Close all open file handles in active_sessions (e.g. on shutdown)."""
+    for session_id, session in list(active_sessions.items()):
+        try:
+            if "file" in session and not session["file"].closed:
+                session["file"].close()
+                print(f"🔒 [Eye Tracking] Closed file handle for active session {session_id} on shutdown")
+        except Exception as e:
+            print(f"⚠️ [Eye Tracking] Error closing session {session_id} on shutdown: {e}")
+    active_sessions.clear()
+
+
 # ============================================================
 # API Endpoints
 # ============================================================
 @router.post("/session/start", response_model=SessionStartResponse)
 async def start_session(request: SessionStartRequest):
     """Mulai session eye tracking baru, buat file CSV."""
+    prune_idle_sessions()
     session_id = generate_session_id()
     filename = os.path.join(DATA_DIR, f"{session_id}.csv")
 
@@ -146,6 +176,7 @@ async def start_session(request: SessionStartRequest):
         "mode": request.mode,
         "start_time": datetime.now().isoformat(),
         "data_count": 0,
+        "last_active": datetime.now(),
     }
 
     print(f"👁️ [Eye Tracking] Session started: {session_id}")
@@ -161,6 +192,7 @@ async def receive_data(session_id: str, data: EyeTrackingDataPoint):
     if not session:
         return {"status": "error", "message": f"Session {session_id} not found"}
 
+    session["last_active"] = datetime.now()
     writer = session["writer"]
     writer.writerow(
         [
@@ -193,6 +225,7 @@ async def receive_batch(request: BatchDataRequest):
             "message": f"Session {request.session_id} not found",
         }
 
+    session["last_active"] = datetime.now()
     writer = session["writer"]
     for data in request.data_points:
         writer.writerow(

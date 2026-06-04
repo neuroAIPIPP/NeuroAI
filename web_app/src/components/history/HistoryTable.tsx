@@ -25,7 +25,6 @@ export default function HistoryTable() {
   });
 
   const totalPages = Math.ceil(filteredSessions.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
 
   // Safety check if current page exceeds total pages due to filtering
   const safeCurrentPage = Math.min(currentPage, Math.max(1, totalPages));

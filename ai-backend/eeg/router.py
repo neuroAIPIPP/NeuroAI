@@ -23,15 +23,16 @@ from pydantic import BaseModel
 router = APIRouter()
 
 # ============================================================
-# Global State
+# Global State with Thread Synchronization
 # ============================================================
-is_recording = False
+state_lock = threading.Lock()
+is_recording_event = threading.Event()
 recording_thread: threading.Thread | None = None
 current_marker = "Idle"
 current_filename = ""
 recording_mode = "None"  # "Real", "Mock", or "None"
 
-# Direktori penyimpanan recording
+# Perekaman recordings directory
 RECORDINGS_DIR = os.path.join(os.path.dirname(__file__), "recordings")
 os.makedirs(RECORDINGS_DIR, exist_ok=True)
 
@@ -64,12 +65,12 @@ class StatusResponse(BaseModel):
 # LSL Stream Functions
 # ============================================================
 def find_muse_stream():
-    """Mencari stream EEG dari Muse via LSL. Timeout 2 detik."""
+    """Mencari stream EEG dari Muse via LSL. Timeout 5 detik."""
     try:
         from pylsl import StreamInlet, resolve_byprop
 
         print("🔵 [EEG] Mencari sinyal Muse...")
-        streams = resolve_byprop("type", "EEG", timeout=2)
+        streams = resolve_byprop("type", "EEG", timeout=5)
         if len(streams) == 0:
             return None
         print("✅ [EEG] Muse Ditemukan & Terhubung!")
@@ -89,7 +90,7 @@ def record_loop(filename: str):
     - Jika tidak ditemukan dalam 3 detik, fallback ke SIMULASI EEG (Mock Mode)
       agar aplikasi dapat ditest secara end-to-end tanpa alat fisik.
     """
-    global is_recording, current_marker, recording_mode
+    global recording_mode
 
     print(f"🔴 [EEG] MEMULAI PEREKAMAN KE FILE: {filename}")
     
@@ -107,7 +108,7 @@ def record_loop(filename: str):
         attempt = 0
         use_mock = False
 
-        while is_recording:
+        while is_recording_event.is_set():
             # 1. Coba koneksi LSL
             if inlet is None and not use_mock:
                 inlet = find_muse_stream()
@@ -117,12 +118,14 @@ def record_loop(filename: str):
                         print("⚠️ [EEG] Muse LSL tidak ditemukan.")
                         print("🔄 [EEG] Beralih ke SIMULASI EEG (Mock Mode) untuk testing...")
                         use_mock = True
-                        recording_mode = "Mock"
+                        with state_lock:
+                            recording_mode = "Mock"
                     else:
                         time.sleep(1)
                         continue
                 else:
-                    recording_mode = "Real"
+                    with state_lock:
+                        recording_mode = "Real"
 
             # 2. Tarik Data
             if use_mock:
@@ -130,6 +133,8 @@ def record_loop(filename: str):
                 time.sleep(0.1)
                 rows = []
                 base_time = time.time()
+                with state_lock:
+                    marker = current_marker
                 for i in range(25):
                     t = base_time - (25 - i) * 0.004
                     # Buat sinyal sinusoidal + noise acak (10-100 uV)
@@ -139,7 +144,7 @@ def record_loop(filename: str):
                     tp10 = 52.0 + 7.0 * math.sin(t * 2 * math.pi * 10) + random.uniform(-1.5, 1.5)
                     aux = 20.0 + random.uniform(-0.5, 0.5)
                     
-                    rows.append([t, tp9, af7, af8, tp10, aux, current_marker])
+                    rows.append([t, tp9, af7, af8, tp10, aux, marker])
                 
                 try:
                     writer.writerows(rows)
@@ -154,8 +159,10 @@ def record_loop(filename: str):
 
                     if timestamps:
                         rows = []
+                        with state_lock:
+                            marker = current_marker
                         for i in range(len(timestamps)):
-                            row = [timestamps[i]] + chunk[i] + [current_marker]
+                            row = [timestamps[i]] + chunk[i] + [marker]
                             rows.append(row)
 
                         writer.writerows(rows)
@@ -166,11 +173,13 @@ def record_loop(filename: str):
                     print(f"⚠️ [EEG] Koneksi LSL terputus: {e}")
                     print("🔄 [EEG] Mencoba menyambung ulang...")
                     inlet = None
-                    recording_mode = "None"
+                    with state_lock:
+                        recording_mode = "None"
                     attempt = 0
 
     print("⏹️ [EEG] Perekaman Selesai.")
-    recording_mode = "None"
+    with state_lock:
+        recording_mode = "None"
 
 
 # ============================================================
@@ -179,44 +188,52 @@ def record_loop(filename: str):
 @router.post("/start", response_model=StartResponse)
 async def start_recording():
     """Mulai perekaman EEG ke file CSV."""
-    global is_recording, recording_thread, current_filename, current_marker
+    global recording_thread, current_filename, current_marker
 
-    if not is_recording:
-        is_recording = True
-        current_marker = "Focus_Session_Start"
-
-        timestamp_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        current_filename = os.path.join(RECORDINGS_DIR, f"EEG_{timestamp_str}.csv")
+    if not is_recording_event.is_set():
+        is_recording_event.set()
+        with state_lock:
+            current_marker = "Focus_Session_Start"
+            timestamp_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            current_filename = os.path.join(RECORDINGS_DIR, f"EEG_{timestamp_str}.csv")
+            filename = current_filename
 
         recording_thread = threading.Thread(
-            target=record_loop, args=(current_filename,)
+            target=record_loop, args=(filename,)
         )
         recording_thread.start()
 
-        return StartResponse(status="started", file=current_filename)
+        return StartResponse(status="started", file=filename)
 
-    return StartResponse(status="already_running", file=current_filename)
+    with state_lock:
+        filename = current_filename
+    return StartResponse(status="already_running", file=filename)
 
 
 @router.post("/marker")
 async def set_marker(request: MarkerRequest):
     """Set marker pada data EEG yang sedang direkam."""
     global current_marker
-    current_marker = request.label.replace(" ", "_")
-    print(f"📍 [EEG MARKER] {current_marker}")
-    return {"status": "ok", "marker": current_marker}
+    with state_lock:
+        current_marker = request.label.replace(" ", "_")
+        marker = current_marker
+    print(f"📍 [EEG MARKER] {marker}")
+    return {"status": "ok", "marker": marker}
 
 
 @router.post("/stop", response_model=StopResponse)
 async def stop_recording():
     """Stop perekaman EEG."""
-    global is_recording, recording_thread
+    global recording_thread
 
-    if is_recording:
-        is_recording = False
+    if is_recording_event.is_set():
+        is_recording_event.clear()
         if recording_thread:
             recording_thread.join(timeout=5)
-        return StopResponse(status="saved", file=current_filename)
+            recording_thread = None
+        with state_lock:
+            filename = current_filename
+        return StopResponse(status="saved", file=filename)
 
     return StopResponse(status="not_running")
 
@@ -224,9 +241,10 @@ async def stop_recording():
 @router.get("/status", response_model=StatusResponse)
 async def get_status():
     """Cek status perekaman EEG."""
-    return StatusResponse(
-        is_recording=is_recording,
-        current_marker=current_marker,
-        current_file=current_filename,
-        recording_mode=recording_mode,
-    )
+    with state_lock:
+        return StatusResponse(
+            is_recording=is_recording_event.is_set(),
+            current_marker=current_marker,
+            current_file=current_filename,
+            recording_mode=recording_mode,
+        )

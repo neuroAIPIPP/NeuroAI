@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertTriangle, ScanFace } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import React from 'react';
 
 interface FaceRegisterHeaderProps {
