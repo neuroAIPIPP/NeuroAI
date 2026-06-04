@@ -6,15 +6,20 @@ import HistoryPagination from './HistoryPagination';
 import HistorySearchFilter from './HistorySearchFilter';
 import HistoryTableHeader from './HistoryTableHeader';
 import HistoryTableRow from './HistoryTableRow';
-import { FILTER_OPTIONS, ITEMS_PER_PAGE, MOCK_SESSIONS } from './mockData';
+import { FILTER_OPTIONS, ITEMS_PER_PAGE } from './mockData';
+import { HistorySession } from './types';
 
-export default function HistoryTable() {
+interface HistoryTableProps {
+  initialSessions: HistorySession[];
+}
+
+export default function HistoryTable({ initialSessions }: HistoryTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState(FILTER_OPTIONS[1]); // 'Last 30 Days'
 
   // Filter sessions based on search query
-  const filteredSessions = MOCK_SESSIONS.filter((session) => {
+  const filteredSessions = initialSessions.filter((session) => {
     const query = searchQuery.toLowerCase();
     return (
       session.name.toLowerCase().includes(query) ||

@@ -1,8 +1,85 @@
+import { Prisma } from '@/app/generated/prisma/client';
 import Navbar from '@/components/Navbar';
 import HistoryTable from '@/components/history/HistoryTable';
+import { HistorySession } from '@/components/history/types';
+import { auth } from '@/lib/auth';
+import prisma from '@/lib/prisma';
 import { Layers, TrendingUp } from 'lucide-react';
+import { headers } from 'next/headers';
 
-export default function HistoryPage() {
+type StudySessionWithRelations = Prisma.StudySessionGetPayload<{
+  include: {
+    user: true;
+    analyses: true;
+  };
+}>;
+
+export default async function HistoryPage() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  let dbSessions: StudySessionWithRelations[] = [];
+
+  if (session?.user) {
+    dbSessions = await prisma.studySession.findMany({
+      where: { userId: session.user.id },
+      include: {
+        user: true,
+        analyses: true,
+      },
+      orderBy: { startTime: 'desc' },
+    });
+  }
+
+  // Calculate statistics
+  let totalFocusScore = 0;
+  let sessionsWithFocus = 0;
+
+  const formattedSessions: HistorySession[] = dbSessions.map((s) => {
+    // Calculate duration
+    const durationMs = s.endTime
+      ? s.endTime.getTime() - s.startTime.getTime()
+      : 0;
+    const hours = Math.floor(durationMs / (1000 * 60 * 60));
+    const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+    const durationStr = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+
+    // Focus Score
+    const focusScore =
+      s.analyses && s.analyses.length > 0
+        ? Math.round(s.analyses[0].concentrationScore)
+        : 0;
+
+    if (focusScore > 0) {
+      totalFocusScore += focusScore;
+      sessionsWithFocus++;
+    }
+
+    return {
+      id: s.id,
+      user: s.user.name || 'Unknown',
+      name:
+        s.analyses && s.analyses.length > 0 && s.analyses[0].videoTitle
+          ? s.analyses[0].videoTitle
+          : 'General Study Session',
+      lead: 'Self Study', // Hardcoded as there's no lead in the DB schema
+      duration: durationStr || '0m',
+      focusScore,
+      date: s.startTime.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }),
+    };
+  });
+
+  const avgFocus =
+    sessionsWithFocus > 0
+      ? (totalFocusScore / sessionsWithFocus).toFixed(1)
+      : '0';
+  const totalSessions = dbSessions.length;
+
   return (
     <main className="min-h-screen relative overflow-hidden">
       {/* Background Decorative Elements */}
@@ -26,7 +103,7 @@ export default function HistoryPage() {
                   Avg. Focus
                 </span>
                 <span className="text-xl font-bold text-[#2A3441] leading-none">
-                  84.2%
+                  {avgFocus}%
                 </span>
               </div>
             </div>
@@ -39,14 +116,14 @@ export default function HistoryPage() {
                   Sessions
                 </span>
                 <span className="text-xl font-bold text-[#2A3441] leading-none">
-                  128
+                  {totalSessions}
                 </span>
               </div>
             </div>
           </div>
         </div>
 
-        <HistoryTable />
+        <HistoryTable initialSessions={formattedSessions} />
       </div>
     </main>
   );
