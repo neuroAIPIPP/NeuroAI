@@ -1,5 +1,6 @@
 'use client';
 
+import { ChartDataPoint } from '@/lib/services/adminService';
 import React, { useState } from 'react';
 import {
   Bar,
@@ -11,17 +12,11 @@ import {
   YAxis,
 } from 'recharts';
 
-const data = [
-  { name: 'Mon', activeUsers: 42, avgFocus: 78 },
-  { name: 'Tue', activeUsers: 55, avgFocus: 82 },
-  { name: 'Wed', activeUsers: 68, avgFocus: 85 },
-  { name: 'Thu', activeUsers: 80, avgFocus: 81 },
-  { name: 'Fri', activeUsers: 74, avgFocus: 79 },
-  { name: 'Sat', activeUsers: 30, avgFocus: 88 },
-  { name: 'Sun', activeUsers: 25, avgFocus: 86 },
-];
-
-export default function AdminEngagementChart() {
+export default function AdminEngagementChart({
+  chartData,
+}: {
+  chartData: ChartDataPoint[];
+}) {
   const [activeTab, setActiveTab] = useState<'users' | 'focus'>('users');
 
   return (
@@ -62,7 +57,7 @@ export default function AdminEngagementChart() {
       <div className="flex-grow w-full h-[220px]">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={data}
+            data={chartData}
             margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
           >
             <CartesianGrid
