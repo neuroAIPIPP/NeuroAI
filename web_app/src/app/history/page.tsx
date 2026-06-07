@@ -79,7 +79,6 @@ export default async function HistoryPage() {
       ? (totalFocusScore / sessionsWithFocus).toFixed(1)
       : '0';
   const totalSessions = dbSessions.length;
-
   return (
     <main className="min-h-screen relative overflow-hidden">
       {/* Background Decorative Elements */}
