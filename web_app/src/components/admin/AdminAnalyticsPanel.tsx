@@ -15,14 +15,14 @@ export default function AdminAnalyticsPanel() {
   } | null>(null);
   const [isResyncing, setIsResyncing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [analyses, setAnalyses] = useState<AnalysisData[]>(MOCK_ADMIN_ANALYSES);
+  const [analyses, setAnalyses] = useState<AnalysisData[]>([]);
   const [selectedAnalysis, setSelectedAnalysis] = useState<AnalysisData | null>(
-    MOCK_ADMIN_ANALYSES[0],
+    null,
   );
   const [stats, setStats] = useState<{
     totalSessions: number;
     avgConcentration: number;
-  }>({ totalSessions: 3, avgConcentration: 84.9 });
+  }>({ totalSessions: 0, avgConcentration: 0 });
 
   const [focusTimeline, setFocusTimeline] = useState<
     { video_time: number; focus_ratio: number }[]
@@ -35,12 +35,10 @@ export default function AdminAnalyticsPanel() {
     }
   }, [notification]);
 
-  // Fetch analyses from API (optional Admin analytics endpoint if implemented, fallback to mock data)
   const fetchAnalyses = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Admin dashboard can query user sessions
-      const response = await fetch('/api/session/analyze');
+      const response = await fetch('/api/admin/analytics');
       if (response.ok) {
         const data = await response.json();
         if (
@@ -69,10 +67,14 @@ export default function AdminAnalyticsPanel() {
           setStats(
             data.stats || {
               totalSessions: updatedAnalyses.length,
-              avgConcentration: 84.9,
+              avgConcentration: 0,
             },
           );
           setSelectedAnalysis(updatedAnalyses[0]);
+        } else {
+          setAnalyses([]);
+          setSelectedAnalysis(null);
+          setStats({ totalSessions: 0, avgConcentration: 0 });
         }
       }
     } catch (error) {
@@ -81,6 +83,10 @@ export default function AdminAnalyticsPanel() {
       setIsLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    fetchAnalyses();
+  }, [fetchAnalyses]);
 
   useEffect(() => {
     // Generate synthetic timeline when selectedAnalysis changes
