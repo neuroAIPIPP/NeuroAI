@@ -5,9 +5,191 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  output   = "../src/app/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model User {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  role          String?
+  banned        Boolean?  @default(false)
+  banReason     String?
+  banExpires    DateTime?
+  sessions      Session[]
+  accounts      Account[]
+  studySessions StudySession[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id             String   @id
+  expiresAt      DateTime
+  token          String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  ipAddress      String?
+  userAgent      String?
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  impersonatedBy String?
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ============================================================
+// AI / Study Session Models
+// ============================================================
+
+model StudySession {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startTime DateTime @default(now())
+  endTime   DateTime?
+  status    String   @default("active") // active, completed, cancelled
+
+  eegRecordings       EegRecording[]
+  eyeTrackingSessions EyeTrackingSession[]
+  faceVerifications   FaceVerification[]
+  videoRatings        VideoRating[]
+  analyses            ConcentrationAnalysis[]
+
+  @@index([userId])
+  @@map("study_session")
+}
+
+model EegRecording {
+  id        String       @id @default(uuid())
+  sessionId String
+  session   StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  filePath  String
+  startTime DateTime     @default(now())
+  endTime   DateTime?
+
+  @@index([sessionId])
+  @@map("eeg_recording")
+}
+
+model EyeTrackingSession {
+  id              String       @id @default(uuid())
+  sessionId       String
+  session         StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  videoTitle      String       @default("")
+  mode            String       @default("combined")
+  filePath        String?
+  totalDataPoints Int          @default(0)
+  startTime       DateTime     @default(now())
+  endTime         DateTime?
+
+  @@index([sessionId])
+  @@map("eye_tracking_session")
+}
+
+model FaceVerification {
+  id         String       @id @default(uuid())
+  sessionId  String
+  session    StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  timestamp  DateTime     @default(now())
+  personName String
+  confidence Float
+  isVerified Boolean
+
+  @@index([sessionId])
+  @@map("face_verification")
+}
+
+model VideoRating {
+  id        String       @id @default(uuid())
+  sessionId String
+  session   StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  videoTitle String
+  rating    Int
+  timestamp DateTime     @default(now())
+
+  @@index([sessionId])
+  @@map("video_rating")
+}
+
+model ConcentrationAnalysis {
+  id                    String       @id @default(uuid())
+  sessionId             String
+  session               StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  // Core Metrics
+  concentrationScore    Float        // 0-100%
+  eyeTrackingScore      Float        // 0-100%
+  eegScore              Float        // 0-100%
+
+  // Eye Tracking Breakdown
+  focusPercentage       Float        // % waktu focused
+  gazeDistribution      Json         // {center: x, left: y, ...}
+  pupilStability        Float        // 0-100
+
+  // EEG Breakdown
+  attentionIndex        Float?       // beta/alpha ratio
+  relaxationIndex       Float?       // theta/alpha ratio
+  bandPowers            Json?        // {delta, theta, alpha, beta, gamma}
+
+  // AI Insights (dari Gemini)
+  aiSummary             String?      @db.Text
+  aiStrengths           Json?        // string[]
+  aiImprovements        Json?        // string[]
+  aiPatterns            Json?        // string[]
+  aiTips                Json?        // string[]
+  aiGenerated           Boolean      @default(false)
+
+  // Metadata
+  videoTitle            String?
+  analysisMode          String       @default("post-session")
+  eegMode               String?      // Real, Mock, null
+  confidenceLevel       String       @default("low") // high, medium, low
+  createdAt             DateTime     @default(now())
+
+  @@index([sessionId])
+  @@map("concentration_analysis")
 }

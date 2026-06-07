@@ -1,0 +1,46 @@
+@import 'tailwindcss';
+
+:root {
+  --background: #d2e0fb;
+  --foreground: #171717;
+
+  /* Landing Page Palette */
+  --color-primary: #d2e0fb;
+  --color-secondary: #f9f3cc;
+  --color-tertiary: #d7e5ca;
+  --color-quaternary: #8eaccd;
+  --color-accent: #6effff;
+}
+
+@layer base {
+  body {
+    @apply antialiased;
+    background: linear-gradient(
+      135deg,
+      var(--color-primary) 0%,
+      var(--color-secondary) 20%,
+      var(--color-tertiary) 60%,
+      var(--color-quaternary) 100%
+    );
+    background-attachment: fixed;
+    background-size: cover;
+    min-height: 100vh;
+    color: var(--foreground);
+  }
+}
+
+@layer utilities {
+  .text-gradient-neuro {
+    background: linear-gradient(to bottom, #6effff 0%, #e5e7eb 75%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .bg-glass {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
