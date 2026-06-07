@@ -15,6 +15,7 @@ import csv
 import os
 import threading
 import time
+import subprocess
 from datetime import datetime
 
 from fastapi import APIRouter
@@ -59,9 +60,13 @@ class StatusResponse(BaseModel):
     current_marker: str
     current_file: str
     recording_mode: str = "None"
+    is_stream_active: bool = False
 
+class ConnectRequest(BaseModel):
+    address: str
 
-# ============================================================
+# Global subprocess for muselsl stream
+muselsl_process = None
 # LSL Stream Functions
 # ============================================================
 def find_muse_stream():
@@ -241,10 +246,92 @@ async def stop_recording():
 @router.get("/status", response_model=StatusResponse)
 async def get_status():
     """Cek status perekaman EEG."""
+    global muselsl_process
+    stream_active = muselsl_process is not None and muselsl_process.poll() is None
+    
     with state_lock:
         return StatusResponse(
             is_recording=is_recording_event.is_set(),
             current_marker=current_marker,
             current_file=current_filename,
             recording_mode=recording_mode,
+            is_stream_active=stream_active
         )
+
+# ============================================================
+# Muse Hardware Detection Endpoints
+# ============================================================
+@router.get("/scan")
+async def scan_muses():
+    """Scan for available Muse headbands using Bluetooth BLE via subprocess."""
+    import asyncio
+    import re
+    try:
+        print("🔵 [EEG] Scanning for Muse devices via asyncio subprocess...")
+        process = await asyncio.create_subprocess_shell(
+            "muselsl list",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        
+        stdout, stderr = await process.communicate()
+        output = ""
+        if stdout:
+            output += stdout.decode(errors='replace') + "\n"
+        if stderr:
+            output += stderr.decode(errors='replace')
+        
+        muses = []
+        for line in output.split('\n'):
+            if "Found device" in line:
+                name_match = re.search(r"device\s+([^,]+)", line)
+                mac_match = re.search(r"MAC Address\s+([A-Fa-f0-9:]+)", line)
+                if name_match and mac_match:
+                    muses.append({
+                        "name": name_match.group(1).strip(),
+                        "address": mac_match.group(1).strip()
+                    })
+        
+        if not muses:
+            return {"status": "no_devices_found", "devices": []}
+            
+        print(f"✅ [EEG] Found {len(muses)} Muse(s): {muses}")
+        return {"status": "success", "devices": muses}
+    except Exception as e:
+        print(f"⚠️ [EEG] Scan Error: {e}")
+        return {"status": "error", "error": str(e)}
+
+@router.post("/connect")
+async def connect_muse(req: ConnectRequest):
+    """Start LSL stream for a specific Muse device."""
+    global muselsl_process
+    
+    if muselsl_process and muselsl_process.poll() is None:
+        return {"status": "already_streaming"}
+        
+    try:
+        # Start muselsl stream in background subprocess
+        print(f"🔵 [EEG] Starting muselsl stream for {req.address}...")
+        
+        # Windows requires shell=True sometimes for console scripts, but usually list is fine
+        muselsl_process = subprocess.Popen(
+            ["muselsl", "stream", "--address", req.address],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        return {"status": "success", "message": f"Started stream for {req.address}"}
+    except Exception as e:
+        print(f"⚠️ [EEG] Error starting stream: {e}")
+        return {"status": "error", "error": str(e)}
+
+@router.post("/disconnect")
+async def disconnect_muse():
+    """Stop the background LSL stream process."""
+    global muselsl_process
+    if muselsl_process and muselsl_process.poll() is None:
+        muselsl_process.terminate()
+        muselsl_process = None
+        print("⏹️ [EEG] muselsl stream stopped.")
+        return {"status": "success", "message": "Stream stopped"}
+    return {"status": "not_streaming"}

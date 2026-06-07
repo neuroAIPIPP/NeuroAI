@@ -104,7 +104,7 @@ export default function HardwarePage() {
                   ) : (
                     <>
                       <Unplug className="w-4 h-4" />
-                      Pair USB Headset
+                      {isRefreshingEEG ? 'Scanning...' : 'Scan & Connect Muse'}
                     </>
                   )}
                 </button>

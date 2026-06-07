@@ -65,6 +65,7 @@ export const eegApi = {
     current_marker: string;
     current_file: string;
     recording_mode: string | null;
+    is_stream_active: boolean;
   }> => {
     try {
       const res = await fetch(`${EEG_API}/status`);
@@ -76,7 +77,57 @@ export const eegApi = {
         current_marker: '',
         current_file: '',
         recording_mode: null,
+        is_stream_active: false,
       };
+    }
+  },
+
+  /**
+   * Scan for available Muse devices via Bluetooth.
+   */
+  scanDevices: async (): Promise<{
+    status: string;
+    devices: { name: string; address: string }[];
+    error?: string;
+  }> => {
+    try {
+      const res = await fetch(`${EEG_API}/scan`);
+      return await res.json();
+    } catch (e) {
+      console.warn('[EEG] Gagal scan device:', e);
+      return { status: 'error', devices: [], error: String(e) };
+    }
+  },
+
+  /**
+   * Connect and start LSL stream for a specific Muse device.
+   */
+  connectDevice: async (
+    address: string,
+  ): Promise<{ status: string; message?: string; error?: string }> => {
+    try {
+      const res = await fetch(`${EEG_API}/connect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address }),
+      });
+      return await res.json();
+    } catch (e) {
+      console.warn('[EEG] Gagal connect device:', e);
+      return { status: 'error', error: String(e) };
+    }
+  },
+
+  /**
+   * Disconnect the LSL stream process.
+   */
+  disconnectDevice: async (): Promise<{ status: string; message?: string }> => {
+    try {
+      const res = await fetch(`${EEG_API}/disconnect`, { method: 'POST' });
+      return await res.json();
+    } catch (e) {
+      console.warn('[EEG] Gagal disconnect device:', e);
+      return { status: 'error' };
     }
   },
 };
