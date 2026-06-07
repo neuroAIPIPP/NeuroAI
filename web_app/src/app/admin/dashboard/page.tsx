@@ -2,6 +2,8 @@ import AdminDashboardContent from '@/components/admin/AdminDashboardContent';
 import AdminNavbar from '@/components/admin/AdminNavbar';
 import { getAdminDashboardData } from '@/lib/services/adminService';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminDashboardPage() {
   const data = await getAdminDashboardData();
 
