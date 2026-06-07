@@ -4,7 +4,7 @@ import AdminEngagementChart from '@/components/admin/AdminEngagementChart';
 import AdminNavbar from '@/components/admin/AdminNavbar';
 import InfoCard from '@/components/dashboard/InfoCard';
 import StatCard from '@/components/dashboard/StatCard';
-import { Activity, Clock, Server, Target, Users } from 'lucide-react';
+import { Clock, Target, Users } from 'lucide-react';
 
 export default function AdminDashboardPage() {
   return (
