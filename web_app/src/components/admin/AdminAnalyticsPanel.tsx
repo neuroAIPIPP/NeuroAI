@@ -199,7 +199,7 @@ export default function AdminAnalyticsPanel() {
     analyses.length > 1 ? analyses[1].concentrationScore : undefined;
 
   return (
-    <div className="pt-28 pb-12 px-6 lg:px-12 max-w-[1400px] mx-auto min-h-screen flex flex-col relative z-10">
+    <div className="pt-28 pb-12 px-6 max-w-7xl mx-auto min-h-screen flex flex-col relative z-10">
       {/* Toast Notification */}
       {notification && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-4 duration-300">

@@ -32,7 +32,7 @@ export default function AdminAnalyticsHeader({
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
       <div>
         <h1 className="text-[2.75rem] font-bold text-[#2A3441] tracking-tight">
-          User Neural Analytics
+          Users Analytics
         </h1>
         {totalSessions > 0 && (
           <p className="text-sm text-gray-400 font-medium mt-1">
@@ -50,7 +50,7 @@ export default function AdminAnalyticsHeader({
               const selected = analyses.find((a) => a.id === e.target.value);
               onSelectAnalysis(selected || null);
             }}
-            className="px-4 py-2.5 bg-white border border-gray-200 text-sm font-bold text-[#2A3441] rounded-full focus:outline-none focus:ring-2 focus:ring-[#8EACCD] shadow-sm cursor-pointer"
+            className="px-4 py-2.5 bg-white border border-gray-200 text-sm font-bold text-[#2A3441] rounded-full focus:outline-none focus:ring-2 focus:ring-[#8EACCD] shadow-sm cursor-pointer max-w-[220px] md:max-w-xs truncate"
           >
             {analyses.map((a) => (
               <option key={a.id} value={a.id}>
