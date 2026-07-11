@@ -1,5 +1,7 @@
 'use client';
 
+import InfoTooltip from '@/components/ui/InfoTooltip';
+import { GLOSSARY } from '@/config/glossary';
 import React from 'react';
 import { Bar, BarChart, Cell, ResponsiveContainer } from 'recharts';
 
@@ -40,8 +42,9 @@ export default function EngagementScoreCard({
   return (
     <div className="bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] h-full flex flex-col md:flex-row items-center justify-between gap-8">
       <div className="flex flex-col">
-        <span className="text-[10px] font-bold text-gray-400 tracking-[0.2em] mb-2 uppercase">
+        <span className="text-[10px] font-bold text-gray-400 tracking-[0.2em] mb-2 uppercase flex items-center">
           Concentration Score
+          <InfoTooltip content={GLOSSARY.concentrationScore} />
         </span>
         <div className="flex items-baseline gap-2 mb-1">
           <h2 className="text-[5rem] font-bold text-[#2A3441] leading-none">

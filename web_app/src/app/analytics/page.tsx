@@ -1,19 +1,29 @@
 'use client';
 
 import Navbar from '@/components/Navbar';
+import { MOCK_ADMIN_ANALYSES } from '@/components/admin/mockData';
 import AIInsights from '@/components/analytics/AIInsights';
 import BetaWaveTrends from '@/components/analytics/BetaWaveTrends';
 import EngagementScoreCard from '@/components/analytics/EngagementScoreCard';
 import FocusDistractionCard from '@/components/analytics/FocusDistractionCard';
 import NeuralStateDistribution from '@/components/analytics/NeuralStateDistribution';
+import InfoTooltip from '@/components/ui/InfoTooltip';
+import { GLOSSARY } from '@/config/glossary';
+import {
+  downloadCsv,
+  generateBulkAnalysisCsv,
+  generateSingleAnalysisCsv,
+} from '@/utils/csvExport';
 import {
   CheckCircle2,
   Download,
+  FileSpreadsheet,
   Loader2,
   RefreshCw,
   Sparkles,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 
 // Types for the analysis data
 interface AnalysisData {
@@ -46,7 +56,10 @@ interface AnalysisData {
   };
 }
 
-export default function AnalyticsPage() {
+function AnalyticsPageContent() {
+  const searchParams = useSearchParams();
+  const sessionIdParam = searchParams.get('sessionId');
+
   const [notification, setNotification] = useState<{
     message: string;
     type: 'success' | 'info' | 'error';
@@ -85,20 +98,82 @@ export default function AnalyticsPage() {
       const data = await response.json();
 
       if (data.status === 'success') {
-        setAnalyses(data.analyses || []);
-        setStats(data.stats || { totalSessions: 0, avgConcentration: 0 });
+        const dbAnalyses = data.analyses || [];
 
-        // Auto-select the latest analysis
-        if (data.analyses && data.analyses.length > 0) {
-          setSelectedAnalysis(data.analyses[0]);
-        }
+        // Map database analyses, or fall back to mock analyses if empty
+        const mockAnalyses = MOCK_ADMIN_ANALYSES.map((a, idx) => ({
+          ...a,
+          sessionId: String(idx + 1), // Aligns with MOCK_SESSIONS ids "1", "2", "3"...
+          user: {
+            name: 'Sample User',
+            email: 'user@neuroai.id',
+          },
+        }));
+
+        const allAnalyses: AnalysisData[] =
+          dbAnalyses.length > 0 ? dbAnalyses : mockAnalyses;
+
+        setAnalyses(allAnalyses);
+        setStats(
+          dbAnalyses.length > 0
+            ? data.stats
+            : { totalSessions: allAnalyses.length, avgConcentration: 84.9 },
+        );
+
+        // Find match in our active list
+        const matched = allAnalyses.find(
+          (a) => a.sessionId === sessionIdParam || a.id === sessionIdParam,
+        );
+        setSelectedAnalysis(matched || allAnalyses[0]);
       }
     } catch (error) {
       console.error('[Analytics] Error fetching analyses:', error);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [sessionIdParam]);
+
+  useEffect(() => {
+    if (analyses.length > 0 && sessionIdParam) {
+      const matched = analyses.find((a) => a.sessionId === sessionIdParam);
+      if (matched && selectedAnalysis?.sessionId !== sessionIdParam) {
+        setSelectedAnalysis(matched);
+      }
+    }
+  }, [sessionIdParam, analyses, selectedAnalysis]);
+
+  const handleExport = () => {
+    if (selectedAnalysis) {
+      const csv = generateSingleAnalysisCsv(selectedAnalysis);
+      const dateStr = new Date(selectedAnalysis.createdAt)
+        .toISOString()
+        .slice(0, 10);
+      downloadCsv(csv, `neuroai-analisis-${dateStr}.csv`);
+      setNotification({ message: 'Export CSV berhasil!', type: 'success' });
+    } else {
+      setNotification({
+        message: 'Tidak ada data untuk di-export',
+        type: 'error',
+      });
+    }
+  };
+
+  const handleExportAll = () => {
+    if (analyses.length > 0) {
+      const csv = generateBulkAnalysisCsv(analyses);
+      const dateStr = new Date().toISOString().slice(0, 10);
+      downloadCsv(csv, `neuroai-semua-analisis-${dateStr}.csv`);
+      setNotification({
+        message: `${analyses.length} data berhasil diexport ke CSV!`,
+        type: 'success',
+      });
+    } else {
+      setNotification({
+        message: 'Tidak ada data untuk di-export',
+        type: 'error',
+      });
+    }
+  };
 
   useEffect(() => {
     fetchAnalyses();
@@ -144,27 +219,6 @@ export default function AnalyticsPage() {
 
     fetchFullAnalysis();
   }, [selectedAnalysis]);
-
-  const handleExport = () => {
-    // Export current analysis as JSON
-    if (selectedAnalysis) {
-      const blob = new Blob([JSON.stringify(selectedAnalysis, null, 2)], {
-        type: 'application/json',
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `neuroai-analysis-${selectedAnalysis.id}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      setNotification({ message: 'Export berhasil!', type: 'success' });
-    } else {
-      setNotification({
-        message: 'Tidak ada data untuk di-export',
-        type: 'error',
-      });
-    }
-  };
 
   const handleResync = async () => {
     setIsResyncing(true);
@@ -260,11 +314,19 @@ export default function AnalyticsPage() {
 
             <button
               onClick={handleExport}
-              className="flex items-center gap-2 px-6 py-2.5 bg-[#3B526A] text-white text-sm font-bold rounded-full hover:bg-[#2C3F53] transition-all shadow-md border-none"
+              className="flex items-center gap-2 px-6 py-2.5 bg-[#3B526A] text-white text-sm font-bold rounded-full hover:bg-[#2C3F53] transition-all shadow-md border-none cursor-pointer"
             >
               <Download className="w-4 h-4" />
-              Export
+              Export CSV
             </button>
+            <button
+              onClick={handleExportAll}
+              className="flex items-center gap-2 px-6 py-2.5 bg-[#2A3441] text-white text-sm font-bold rounded-full hover:bg-[#1E2832] transition-all shadow-md border-none cursor-pointer"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              Export All CSV
+            </button>
+
             <button
               onClick={handleResync}
               disabled={isResyncing}
@@ -394,32 +456,36 @@ export default function AnalyticsPage() {
                 </h3>
                 <div className="space-y-4 flex-grow">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center">
                       Eye Tracking
+                      <InfoTooltip content={GLOSSARY.eyeTrackingScore} />
                     </span>
                     <span className="text-sm font-bold text-[#2A3441]">
                       {selectedAnalysis.eyeTrackingScore.toFixed(1)}%
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center">
                       EEG Score
+                      <InfoTooltip content={GLOSSARY.eegScore} />
                     </span>
                     <span className="text-sm font-bold text-[#2A3441]">
                       {selectedAnalysis.eegScore.toFixed(1)}%
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center">
                       Pupil Stability
+                      <InfoTooltip content={GLOSSARY.pupilStability} />
                     </span>
                     <span className="text-sm font-bold text-[#2A3441]">
                       {selectedAnalysis.pupilStability.toFixed(1)}%
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center">
                       Confidence
+                      <InfoTooltip content={GLOSSARY.confidenceLevel} />
                     </span>
                     <span
                       className={`text-sm font-bold ${
@@ -471,5 +537,19 @@ export default function AnalyticsPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function AnalyticsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-10 h-10 text-[#8EACCD] animate-spin" />
+        </div>
+      }
+    >
+      <AnalyticsPageContent />
+    </Suspense>
   );
 }
