@@ -1,5 +1,7 @@
 'use client';
 
+import InfoTooltip from '@/components/ui/InfoTooltip';
+import { GLOSSARY } from '@/config/glossary';
 import React from 'react';
 
 interface FocusDistractionCardProps {
@@ -66,8 +68,9 @@ export default function FocusDistractionCard({
   return (
     <div className="bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] h-full">
       <div className="flex justify-between items-start mb-8">
-        <h3 className="text-lg font-bold text-[#2A3441]">
+        <h3 className="text-lg font-bold text-[#2A3441] flex items-center">
           Focus vs. Distraction
+          <InfoTooltip content={GLOSSARY.focusPercentage} />
         </h3>
         <div className="text-right">
           <span className="text-2xl font-bold text-[#2A3441]">
@@ -82,6 +85,10 @@ export default function FocusDistractionCard({
       {/* Phase bars */}
       {phases.length > 0 && (
         <div className="space-y-6 mb-8">
+          <div className="flex items-center text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+            Cognitive Phases
+            <InfoTooltip content={GLOSSARY.cognitivePhases} />
+          </div>
           {phases.map((phase) => (
             <div key={phase.name} className="space-y-2">
               <div className="flex justify-between text-[11px] font-bold">
@@ -108,8 +115,9 @@ export default function FocusDistractionCard({
       {/* Gaze Distribution */}
       {gazeItems.length > 0 && (
         <div className="mb-6">
-          <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">
+          <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center">
             Gaze Distribution
+            <InfoTooltip content={GLOSSARY.gazeDistribution} />
           </h4>
           <div className="flex flex-wrap gap-2">
             {gazeItems.map((item) => (

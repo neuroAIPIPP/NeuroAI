@@ -1,3 +1,4 @@
+import { AnalysisData } from '@/components/admin/mockData';
 import {
   HistorySession,
   StudySessionWithRelations,
@@ -46,6 +47,10 @@ export function formatSessionData(dbSessions: StudySessionWithRelations[]): {
         day: 'numeric',
         year: 'numeric',
       }),
+      analysis:
+        s.analyses && s.analyses.length > 0
+          ? (s.analyses[0] as unknown as AnalysisData)
+          : null,
     };
   });
 

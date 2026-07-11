@@ -1,5 +1,7 @@
 'use client';
 
+import InfoTooltip from '@/components/ui/InfoTooltip';
+import { GLOSSARY } from '@/config/glossary';
 import React from 'react';
 import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts';
 
@@ -40,6 +42,7 @@ export default function NeuralStateDistribution({
     return Object.entries(bandPowers)
       .filter(([, value]) => value && value > 0)
       .map(([band, value]) => ({
+        key: band,
         name: BAND_LABELS[band]?.label || band,
         value: Math.round((value || 0) * 100),
         color: BAND_LABELS[band]?.color || '#BDC5D0',
@@ -85,7 +88,7 @@ export default function NeuralStateDistribution({
       {eegMode && (
         <div className="flex justify-center mb-4">
           <span
-            className={`px-3 py-1 rounded-full text-[10px] font-bold ${
+            className={`px-3 py-1 rounded-full text-[10px] font-bold inline-flex items-center gap-1 ${
               eegMode === 'Real'
                 ? 'bg-green-100 text-green-700'
                 : eegMode === 'Mock'
@@ -98,6 +101,7 @@ export default function NeuralStateDistribution({
               : eegMode === 'Mock'
                 ? '🔄 Simulated EEG'
                 : eegMode}
+            <InfoTooltip content={GLOSSARY.eegMode} />
           </span>
         </div>
       )}
@@ -138,8 +142,23 @@ export default function NeuralStateDistribution({
                 className="w-2.5 h-2.5 rounded-full"
                 style={{ backgroundColor: item.color }}
               />
-              <span className="text-xs font-bold text-[#2A3441]">
+              <span className="text-xs font-bold text-[#2A3441] flex items-center">
                 {item.name}
+                {item.key === 'beta' && (
+                  <InfoTooltip content={GLOSSARY.bandPowerBeta} />
+                )}
+                {item.key === 'alpha' && (
+                  <InfoTooltip content={GLOSSARY.bandPowerAlpha} />
+                )}
+                {item.key === 'theta' && (
+                  <InfoTooltip content={GLOSSARY.bandPowerTheta} />
+                )}
+                {item.key === 'delta' && (
+                  <InfoTooltip content={GLOSSARY.bandPowerDelta} />
+                )}
+                {item.key === 'gamma' && (
+                  <InfoTooltip content={GLOSSARY.bandPowerGamma} />
+                )}
               </span>
             </div>
             <span className="text-xs font-bold text-[#2A3441]">
@@ -153,7 +172,10 @@ export default function NeuralStateDistribution({
       {eegQuality && (
         <div className="mt-6 pt-4 border-t border-gray-100">
           <div className="flex justify-between text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-            <span>Signal Quality</span>
+            <span className="flex items-center">
+              Signal Quality
+              <InfoTooltip content={GLOSSARY.signalQuality} />
+            </span>
             <span
               className={
                 eegQuality === 'good'

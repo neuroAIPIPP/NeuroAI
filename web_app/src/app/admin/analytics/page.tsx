@@ -2,8 +2,10 @@
 
 import AdminAnalyticsPanel from '@/components/admin/AdminAnalyticsPanel';
 import AdminNavbar from '@/components/admin/AdminNavbar';
+import { Loader2 } from 'lucide-react';
+import { Suspense } from 'react';
 
-export default function AdminAnalyticsPage() {
+function AdminAnalyticsPageContent() {
   return (
     <main className="min-h-screen relative overflow-hidden">
       {/* Background Decorative Elements */}
@@ -13,5 +15,19 @@ export default function AdminAnalyticsPage() {
       <AdminNavbar />
       <AdminAnalyticsPanel />
     </main>
+  );
+}
+
+export default function AdminAnalyticsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-10 h-10 text-[#8EACCD] animate-spin" />
+        </div>
+      }
+    >
+      <AdminAnalyticsPageContent />
+    </Suspense>
   );
 }
