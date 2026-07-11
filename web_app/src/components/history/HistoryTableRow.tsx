@@ -40,14 +40,18 @@ export default function HistoryTableRow({
   return (
     <div className="flex items-center justify-between py-5 border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors px-6 md:px-8 bg-white">
       {/* User */}
-      <div className="w-[15%]">
-        <span className="text-[14px] font-bold text-[#2A3441]">
-          {session.user}
-        </span>
-      </div>
+      {isAdmin && (
+        <div className="w-[15%]">
+          <span className="text-[14px] font-bold text-[#2A3441]">
+            {session.user}
+          </span>
+        </div>
+      )}
 
       {/* Session Name & Lead */}
-      <div className="flex items-center gap-4 w-[25%]">
+      <div
+        className={`flex items-center gap-4 ${isAdmin ? 'w-[25%]' : 'w-[40%]'}`}
+      >
         <div>
           <h4 className="text-[15px] font-bold text-[#2A3441] leading-tight">
             {session.name}
@@ -99,17 +103,19 @@ export default function HistoryTableRow({
         >
           <Download className="w-3.5 h-3.5" />
         </button>
-        <Link
-          href={
-            isAdmin
-              ? `/admin/analytics?sessionId=${session.id}`
-              : `/analytics?sessionId=${session.id}`
-          }
-        >
-          <button className="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-[#2A3441] text-[12px] font-bold rounded-lg transition-colors shadow-sm cursor-pointer">
-            View Details
-          </button>
-        </Link>
+        {isAdmin && (
+          <Link
+            href={
+              isAdmin
+                ? `/admin/analytics?sessionId=${session.id}`
+                : `/analytics?sessionId=${session.id}`
+            }
+          >
+            <button className="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-[#2A3441] text-[12px] font-bold rounded-lg transition-colors shadow-sm cursor-pointer">
+              View Details
+            </button>
+          </Link>
+        )}
       </div>
     </div>
   );

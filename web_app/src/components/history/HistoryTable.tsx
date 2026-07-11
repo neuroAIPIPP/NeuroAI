@@ -1,12 +1,11 @@
 'use client';
 
 import { downloadCsv, generateBulkAnalysisCsv } from '@/utils/csvExport';
-import { FileSpreadsheet } from 'lucide-react';
 import { useState } from 'react';
 
 import { AnalysisData } from '../admin/mockData';
 import HistoryPagination from './HistoryPagination';
-import HistorySearchFilter from './HistorySearchFilter';
+import HistorySearchAndExport from './HistorySearchAndExport';
 import HistoryTableHeader from './HistoryTableHeader';
 import HistoryTableRow from './HistoryTableRow';
 import { FILTER_OPTIONS, ITEMS_PER_PAGE } from './mockData';
@@ -25,15 +24,47 @@ export default function HistoryTable({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState(FILTER_OPTIONS[1]); // 'Last 30 Days'
 
-  // Filter sessions based on search query
+  // Filter sessions based on search query and selected filter
   const filteredSessions = initialSessions.filter((session) => {
+    // 1. Search Query Filter
     const query = searchQuery.toLowerCase();
-    return (
+    const matchesSearch =
       session.name.toLowerCase().includes(query) ||
       session.lead.toLowerCase().includes(query) ||
       session.user.toLowerCase().includes(query) ||
-      session.date.toLowerCase().includes(query)
+      session.date.toLowerCase().includes(query);
+
+    if (!matchesSearch) return false;
+
+    // 2. Date Filter
+    const sessionDate = new Date(session.date);
+    if (isNaN(sessionDate.getTime())) {
+      return true; // Fallback if invalid date string
+    }
+
+    const now = new Date();
+    // Normalize dates to mid-night to avoid time of day difference issues
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const targetDate = new Date(
+      sessionDate.getFullYear(),
+      sessionDate.getMonth(),
+      sessionDate.getDate(),
     );
+
+    const diffTime = today.getTime() - targetDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (selectedFilter === 'Last 7 Days') {
+      return diffDays <= 7 && diffDays >= 0;
+    }
+    if (selectedFilter === 'Last 30 Days') {
+      return diffDays <= 30 && diffDays >= 0;
+    }
+    if (selectedFilter === 'This Year') {
+      return sessionDate.getFullYear() === now.getFullYear();
+    }
+
+    return true; // 'All Time'
   });
 
   const totalPages = Math.ceil(filteredSessions.length / ITEMS_PER_PAGE);
@@ -93,32 +124,21 @@ export default function HistoryTable({
 
   return (
     <div className="flex flex-col gap-6 w-full mx-auto">
-      {/* Search, Filter and Export */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 w-full">
-        <div className="w-full max-w-[600px] mx-auto md:mx-0">
-          <HistorySearchFilter
-            searchQuery={searchQuery}
-            onSearchChange={handleSearchChange}
-            selectedFilter={selectedFilter}
-            onFilterChange={handleFilterChange}
-            filterOptions={FILTER_OPTIONS}
-          />
-        </div>
-        {filteredSessions.length > 0 && (
-          <button
-            onClick={handleExportFiltered}
-            className="flex items-center gap-2 px-6 py-2.5 bg-[#3B526A] text-white text-sm font-bold rounded-full hover:bg-[#2C3F53] transition-all shadow-md cursor-pointer shrink-0 border-none"
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-            Export Filtered CSV
-          </button>
-        )}
-      </div>
+      {/* Search, Filter and Export Component */}
+      <HistorySearchAndExport
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+        selectedFilter={selectedFilter}
+        onFilterChange={handleFilterChange}
+        filterOptions={FILTER_OPTIONS}
+        hasFilteredSessions={filteredSessions.length > 0}
+        onExportFiltered={handleExportFiltered}
+      />
 
       {/* Table Card */}
       <div className="relative z-10 bg-white/90 backdrop-blur-md rounded-3xl overflow-hidden shadow-sm border border-white/50 w-full">
         {/* Table Header */}
-        <HistoryTableHeader />
+        <HistoryTableHeader isAdmin={isAdmin} />
 
         {/* Table Rows */}
         <div className="flex flex-col min-h-[400px]">
