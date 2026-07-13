@@ -8,8 +8,7 @@ import FaceRegisterForm from './FaceRegisterForm';
 interface FaceCameraSectionProps {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   stream: MediaStream | null;
-  name: string;
-  setName: (name: string) => void;
+  displayName: string;
   isRegistering: boolean;
   backendAvailable: boolean;
   statusMsg: {
@@ -22,8 +21,7 @@ interface FaceCameraSectionProps {
 export default function FaceCameraSection({
   videoRef,
   stream,
-  name,
-  setName,
+  displayName,
   isRegistering,
   backendAvailable,
   statusMsg,
@@ -41,8 +39,7 @@ export default function FaceCameraSection({
 
         <div className="mt-4">
           <FaceRegisterForm
-            name={name}
-            setName={setName}
+            displayName={displayName}
             isRegistering={isRegistering}
             backendAvailable={backendAvailable}
             stream={stream}

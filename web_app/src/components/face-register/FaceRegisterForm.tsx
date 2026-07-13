@@ -4,8 +4,7 @@ import { AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
 import React from 'react';
 
 interface FaceRegisterFormProps {
-  name: string;
-  setName: (name: string) => void;
+  displayName: string;
   isRegistering: boolean;
   backendAvailable: boolean;
   stream: MediaStream | null;
@@ -17,8 +16,7 @@ interface FaceRegisterFormProps {
 }
 
 export default function FaceRegisterForm({
-  name,
-  setName,
+  displayName,
   isRegistering,
   backendAvailable,
   stream,
@@ -29,15 +27,13 @@ export default function FaceRegisterForm({
     <div className="space-y-4">
       <div>
         <label className="block text-sm font-bold text-gray-700 mb-1.5">
-          Nama Lengkap
+          Akun Terkait
         </label>
         <input
           type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Masukkan nama Anda..."
-          className="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-white/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#8EACCD] focus:border-transparent transition-all shadow-sm"
-          disabled={isRegistering || !backendAvailable}
+          value={displayName}
+          readOnly
+          className="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-gray-100 text-gray-600 focus:outline-none transition-all shadow-sm cursor-not-allowed font-medium"
         />
       </div>
 
@@ -60,9 +56,16 @@ export default function FaceRegisterForm({
 
       <button
         onClick={onRegister}
-        disabled={isRegistering || !name.trim() || !stream || !backendAvailable}
+        disabled={
+          isRegistering || !displayName.trim() || !stream || !backendAvailable
+        }
         className={`w-full py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all ${
-          !(isRegistering || !name.trim() || !stream || !backendAvailable)
+          !(
+            isRegistering ||
+            !displayName.trim() ||
+            !stream ||
+            !backendAvailable
+          )
             ? 'bg-[#8EACCD] text-white hover:bg-[#7899BD] shadow-lg active:scale-[0.98]'
             : 'bg-gray-100 text-gray-400 cursor-not-allowed'
         }`}
