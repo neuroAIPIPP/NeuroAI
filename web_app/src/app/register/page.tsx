@@ -164,7 +164,7 @@ export default function RegisterPage() {
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <AuthCard>
         <button
-          onClick={() => router.back()}
+          onClick={() => router.push('/')}
           className="flex items-center gap-1.5 text-gray-400 hover:text-gray-700 font-medium transition-colors mb-2 text-sm"
         >
           <ArrowLeft className="w-4 h-4" />

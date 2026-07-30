@@ -5,12 +5,17 @@ import FaceCameraSection from '@/components/face-register/FaceCameraSection';
 import FaceRegisterHeader from '@/components/face-register/FaceRegisterHeader';
 import RegisteredFacesSection from '@/components/face-register/RegisteredFacesSection';
 import { FaceListResponse, faceApi } from '@/lib/api/faceApi';
+import { authClient } from '@/lib/auth-client';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 export default function FaceRegisterPage() {
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id || '';
+  const displayName =
+    session?.user?.name || session?.user?.email || 'Memuat Data...';
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
-  const [name, setName] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const [faces, setFaces] = useState<FaceListResponse>({
     total_faces: 0,
@@ -24,7 +29,18 @@ export default function FaceRegisterPage() {
   const [backendAvailable, setBackendAvailable] = useState(true);
 
   const fetchFaces = useCallback(async () => {
+    if (!userId) return; // Wait until session is loaded
+
     const list = await faceApi.listFaces();
+
+    // Filter the list to only include the current user's ID
+    const userFaces = list.names.filter((n) => n === userId);
+    const filteredList = {
+      ...list,
+      names: userFaces,
+      total_faces: userFaces.length,
+    };
+
     if (list.names.length === 0 && list.total_faces === 0) {
       // Backend might be offline or just empty. Let's check status.
       const status = await faceApi.getStatus();
@@ -32,13 +48,13 @@ export default function FaceRegisterPage() {
         setBackendAvailable(false);
       } else {
         setBackendAvailable(true);
-        setFaces(list);
+        setFaces(filteredList);
       }
     } else {
       setBackendAvailable(true);
-      setFaces(list);
+      setFaces(filteredList);
     }
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     fetchFaces();
@@ -69,8 +85,11 @@ export default function FaceRegisterPage() {
   }, []);
 
   const handleCaptureAndRegister = async () => {
-    if (!name.trim()) {
-      setStatusMsg({ type: 'error', text: 'Nama harus diisi' });
+    if (!userId) {
+      setStatusMsg({
+        type: 'error',
+        text: 'Data sesi belum siap, silakan tunggu sebentar.',
+      });
       return;
     }
     if (!videoRef.current) return;
@@ -95,16 +114,15 @@ export default function FaceRegisterPage() {
           return;
         }
 
-        const file = new File([blob], `${name}.jpg`, { type: 'image/jpeg' });
-        const result = await faceApi.registerFace(name, file);
+        const file = new File([blob], `${userId}.jpg`, { type: 'image/jpeg' });
+        const result = await faceApi.registerFace(userId, file);
 
         setIsRegistering(false);
         if (result.status === 'success') {
           setStatusMsg({
             type: 'success',
-            text: `Wajah ${result.name} berhasil didaftarkan!`,
+            text: `Wajah untuk ${displayName} berhasil didaftarkan!`,
           });
-          setName('');
           fetchFaces();
         } else {
           setStatusMsg({ type: 'error', text: result.message });
@@ -139,15 +157,18 @@ export default function FaceRegisterPage() {
           <FaceCameraSection
             videoRef={videoRef}
             stream={stream}
-            name={name}
-            setName={setName}
+            displayName={displayName}
             isRegistering={isRegistering}
             backendAvailable={backendAvailable}
             statusMsg={statusMsg}
             onRegister={handleCaptureAndRegister}
           />
 
-          <RegisteredFacesSection faces={faces} onDelete={handleDelete} />
+          <RegisteredFacesSection
+            faces={faces}
+            displayName={displayName}
+            onDelete={handleDelete}
+          />
         </div>
       </div>
     </main>

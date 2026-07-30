@@ -6,11 +6,13 @@ import React, { useState } from 'react';
 
 interface RegisteredFacesSectionProps {
   faces: FaceListResponse;
+  displayName: string;
   onDelete: (name: string) => void;
 }
 
 export default function RegisteredFacesSection({
   faces,
+  displayName,
   onDelete,
 }: RegisteredFacesSectionProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,9 +69,9 @@ export default function RegisteredFacesSection({
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-[#8EACCD]/15 text-[#5C7FA3] rounded-full flex items-center justify-center font-bold text-base shadow-sm">
-                      {n.charAt(0).toUpperCase()}
+                      {displayName.charAt(0).toUpperCase()}
                     </div>
-                    <p className="font-bold text-[#2A3441]">{n}</p>
+                    <p className="font-bold text-[#2A3441]">{displayName}</p>
                   </div>
                   <button
                     onClick={() => onDelete(n)}

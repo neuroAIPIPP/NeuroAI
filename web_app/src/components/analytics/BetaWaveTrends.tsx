@@ -1,5 +1,7 @@
 'use client';
 
+import InfoTooltip from '@/components/ui/InfoTooltip';
+import { GLOSSARY } from '@/config/glossary';
 import React from 'react';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 
@@ -57,8 +59,9 @@ export default function BetaWaveTrends({
     <div className="bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] h-full flex flex-col">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h3 className="text-xl font-bold text-[#2A3441] mb-1">
+          <h3 className="text-xl font-bold text-[#2A3441] mb-1 flex items-center">
             Focus Timeline
+            <InfoTooltip content={GLOSSARY.focusTimeline} />
           </h3>
           <p className="text-xs text-gray-400 font-medium">
             {betaInfo

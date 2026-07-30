@@ -1,7 +1,14 @@
 'use client';
 
 import { AnalysisData, MOCK_ADMIN_ANALYSES } from '@/components/admin/mockData';
+import {
+  AnalysisData as CsvAnalysisData,
+  downloadCsv,
+  generateBulkAnalysisCsv,
+  generateSingleAnalysisCsv,
+} from '@/utils/csvExport';
 import { CheckCircle2 } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import AdminAnalyticsGrid from './AdminAnalyticsGrid';
@@ -9,6 +16,9 @@ import AdminAnalyticsHeader from './AdminAnalyticsHeader';
 import AdminAnalyticsStates from './AdminAnalyticsStates';
 
 export default function AdminAnalyticsPanel() {
+  const searchParams = useSearchParams();
+  const sessionIdParam = searchParams.get('sessionId');
+
   const [notification, setNotification] = useState<{
     message: string;
     type: 'success' | 'info' | 'error';
@@ -41,12 +51,12 @@ export default function AdminAnalyticsPanel() {
       const response = await fetch('/api/admin/analytics');
       if (response.ok) {
         const data = await response.json();
-        if (
-          data.status === 'success' &&
-          data.analyses &&
-          data.analyses.length > 0
-        ) {
-          const updatedAnalyses = data.analyses.map(
+
+        const dbAnalyses =
+          data.status === 'success' && data.analyses ? data.analyses : [];
+
+        if (dbAnalyses.length > 0) {
+          const updatedAnalyses: AnalysisData[] = dbAnalyses.map(
             (
               a: Omit<AnalysisData, 'user'> & {
                 session?: {
@@ -70,11 +80,28 @@ export default function AdminAnalyticsPanel() {
               avgConcentration: 0,
             },
           );
-          setSelectedAnalysis(updatedAnalyses[0]);
+
+          const matched = updatedAnalyses.find(
+            (a) => a.sessionId === sessionIdParam,
+          );
+          setSelectedAnalysis(matched || updatedAnalyses[0]);
         } else {
-          setAnalyses([]);
-          setSelectedAnalysis(null);
-          setStats({ totalSessions: 0, avgConcentration: 0 });
+          // Fallback to MOCK_ADMIN_ANALYSES mapped with sessionId mock-1, mock-2...
+          const mockAnalyses = MOCK_ADMIN_ANALYSES.map((a, idx) => ({
+            ...a,
+            sessionId: `mock-${idx + 1}`,
+          }));
+
+          setAnalyses(mockAnalyses);
+          setStats({
+            totalSessions: mockAnalyses.length,
+            avgConcentration: 84.9,
+          });
+
+          const matched = mockAnalyses.find(
+            (a) => a.sessionId === sessionIdParam || a.id === sessionIdParam,
+          );
+          setSelectedAnalysis(matched || mockAnalyses[0]);
         }
       }
     } catch (error) {
@@ -82,11 +109,20 @@ export default function AdminAnalyticsPanel() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [sessionIdParam]);
 
   useEffect(() => {
     fetchAnalyses();
   }, [fetchAnalyses]);
+
+  useEffect(() => {
+    if (analyses.length > 0 && sessionIdParam) {
+      const matched = analyses.find((a) => a.sessionId === sessionIdParam);
+      if (matched && selectedAnalysis?.sessionId !== sessionIdParam) {
+        setSelectedAnalysis(matched);
+      }
+    }
+  }, [sessionIdParam, analyses, selectedAnalysis]);
 
   useEffect(() => {
     // Generate synthetic timeline when selectedAnalysis changes
@@ -111,16 +147,34 @@ export default function AdminAnalyticsPanel() {
 
   const handleExport = () => {
     if (selectedAnalysis) {
-      const blob = new Blob([JSON.stringify(selectedAnalysis, null, 2)], {
-        type: 'application/json',
+      // Cast type as any to bypass minor interface differences if any
+      const csv = generateSingleAnalysisCsv(
+        selectedAnalysis as unknown as CsvAnalysisData,
+      );
+      const dateStr = new Date(selectedAnalysis.createdAt)
+        .toISOString()
+        .slice(0, 10);
+      downloadCsv(csv, `neuroai-analisis-${dateStr}.csv`);
+      setNotification({ message: 'Export CSV berhasil!', type: 'success' });
+    } else {
+      setNotification({
+        message: 'Tidak ada data untuk di-export',
+        type: 'error',
       });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `neuroai-admin-analysis-${selectedAnalysis.id}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      setNotification({ message: 'Export data berhasil!', type: 'success' });
+    }
+  };
+
+  const handleExportAll = () => {
+    if (analyses.length > 0) {
+      const csv = generateBulkAnalysisCsv(
+        analyses as unknown as CsvAnalysisData[],
+      );
+      const dateStr = new Date().toISOString().slice(0, 10);
+      downloadCsv(csv, `neuroai-semua-analisis-${dateStr}.csv`);
+      setNotification({
+        message: `${analyses.length} data berhasil diexport ke CSV!`,
+        type: 'success',
+      });
     } else {
       setNotification({
         message: 'Tidak ada data untuk di-export',
@@ -180,6 +234,7 @@ export default function AdminAnalyticsPanel() {
         selectedAnalysis={selectedAnalysis}
         onSelectAnalysis={setSelectedAnalysis}
         onExport={handleExport}
+        onExportAll={handleExportAll}
         onResync={handleResync}
         isResyncing={isResyncing}
       />

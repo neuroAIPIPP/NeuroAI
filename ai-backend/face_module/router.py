@@ -148,6 +148,9 @@ class FaceRecognitionEngine:
 
             # Convert to RGB (required by face_recognition)
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            
+            # Ensure array is contiguous and exactly 8-bit to avoid dlib errors on Windows
+            rgb_frame = np.ascontiguousarray(rgb_frame, dtype=np.uint8)
 
             # Detect face locations first to ensure there is a face
             face_locations = face_recognition.face_locations(rgb_frame)
@@ -197,6 +200,9 @@ class FaceRecognitionEngine:
                 return 0, []
 
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            
+            # Ensure array is contiguous and exactly 8-bit to avoid dlib errors on Windows
+            rgb_frame = np.ascontiguousarray(rgb_frame, dtype=np.uint8)
 
             # Detect faces
             face_locations = face_recognition.face_locations(rgb_frame)

@@ -1,7 +1,11 @@
 import { Prisma } from '@/app/generated/prisma/client';
 import AdminHistoryPanel from '@/components/admin/AdminHistoryPanel';
 import AdminNavbar from '@/components/admin/AdminNavbar';
-import { MOCK_ADMIN_SESSIONS } from '@/components/admin/mockData';
+import {
+  AnalysisData,
+  MOCK_ADMIN_ANALYSES,
+  MOCK_ADMIN_SESSIONS,
+} from '@/components/admin/mockData';
 import { HistorySession } from '@/components/history/types';
 import prisma from '@/lib/prisma';
 
@@ -31,7 +35,6 @@ export default async function AdminHistoryPage() {
     );
   }
 
-  // Calculate statistics
   let totalFocusScore = 0;
   let sessionsWithFocus = 0;
 
@@ -73,9 +76,23 @@ export default async function AdminHistoryPage() {
               day: 'numeric',
               year: 'numeric',
             }),
+            analysis:
+              s.analyses && s.analyses.length > 0
+                ? (s.analyses[0] as unknown as AnalysisData)
+                : null,
           };
         })
-      : MOCK_ADMIN_SESSIONS;
+      : MOCK_ADMIN_SESSIONS.map((s, idx) => {
+          const mockAnalysis =
+            MOCK_ADMIN_ANALYSES[idx % MOCK_ADMIN_ANALYSES.length];
+          return {
+            ...s,
+            analysis: {
+              ...mockAnalysis,
+              sessionId: s.id,
+            },
+          };
+        });
 
   if (dbSessions.length === 0) {
     formattedSessions.forEach((s) => {

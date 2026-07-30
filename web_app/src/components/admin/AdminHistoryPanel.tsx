@@ -57,7 +57,7 @@ export default function AdminHistoryPanel({
         </div>
       </div>
 
-      <HistoryTable initialSessions={initialSessions} />
+      <HistoryTable initialSessions={initialSessions} isAdmin={true} />
     </div>
   );
 }

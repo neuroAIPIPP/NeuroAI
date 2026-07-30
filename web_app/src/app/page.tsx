@@ -95,12 +95,21 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-[#8EACCD]/10">
+      <footer className="py-8 bg-white border-t border-[#8EACCD]/10 rounded-t-[10px]">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="text-2xl font-bold italic text-[#8EACCD]">
+          <Link
+            href="/"
+            className="text-2xl font-bold italic tracking-tight text-gradient-neuro hover:opacity-80 transition-opacity cursor-pointer"
+          >
             NeuroLearn AI
-          </div>
+          </Link>
           <div className="flex gap-8 text-sm font-medium text-gray-500">
+            <Link
+              href="/about"
+              className="hover:text-[#8EACCD] transition-colors"
+            >
+              About Us
+            </Link>
             <Link href="#" className="hover:text-[#8EACCD] transition-colors">
               Privacy Policy
             </Link>
